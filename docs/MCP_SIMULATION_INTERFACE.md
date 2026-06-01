@@ -22,11 +22,18 @@ MCP 科学计算仿真接口把平台内的科学计算能力暴露为安全工�
 | `calculate_bde_sio` | 计算 Si-O BDE | formula_only |
 | `calculate_radical_kinetics` | 计算自由基竞争动力学 | formula_only |
 | `generate_cubegen_template` | 生成 cubegen 命令模板 | template_only |
+| `generate_formchk_template` | 生成 formchk 命令模板 | template_only |
 | `generate_multiwfn_qtaim_template` | 生成 Multiwfn QTAIM 脚本模板 | template_only |
 | `generate_multiwfn_nci_template` | 生成 Multiwfn NCI 脚本模板 | template_only |
+| `generate_multiwfn_esp_template` | 生成 Multiwfn ESP 脚本模板 | template_only |
 | `generate_goodvibes_parse_task` | 生成 GoodVibes 解析任务模板 | template_only |
+| `generate_goodvibes_template` | 生成 GoodVibes 命令模板 | template_only |
 | `generate_slurm_script_template` | 生成 SLURM 脚本模板 | template_only |
 | `generate_chinese_report` | 生成中文报告草稿 | report_only |
+| `validate_external_tool` | 校验外部工具配置 | validation_only |
+| `dry_run_simulation_job` | 生成任务 dry-run 计划 | dry_run |
+| `confirm_simulation_job` | 记录二次确认 | confirmation_only |
+| `execute_confirmed_simulation_job` | 通过安全守卫测试执行路径 | guarded_execute |
 
 ## 统一安全声明
 
@@ -38,6 +45,8 @@ MCP 科学计算仿真接口把平台内的科学计算能力暴露为安全工�
 - mock/example 数据不能作为真实结论
 
 未知工具名必须被拒绝，并返回中文错误：“工具不在安全白名单中。”
+
+`execute_confirmed_simulation_job` 默认只测试拒绝路径。除非系统显式设置 `ENABLE_REAL_QC_EXECUTION=1` 并且外部 runner 单独接管，否则不得直接运行 Gaussian、cubegen、Multiwfn 或 GoodVibes。
 
 ## Agent 调用示例
 

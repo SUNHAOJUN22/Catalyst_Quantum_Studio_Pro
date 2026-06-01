@@ -222,7 +222,11 @@ npm run test:e2e
 ```text
 GET /api/simulation/tools
 POST /api/simulation/tools
+POST /api/simulation/tools/{id}/check-version
 POST /api/simulation/jobs
+POST /api/simulation/jobs/{id}/dry-run
+POST /api/simulation/jobs/{id}/confirm
+POST /api/simulation/jobs/{id}/execute
 POST /api/simulation/parse/gaussian-log
 POST /api/simulation/parse/cube
 POST /api/simulation/parse/nbo
@@ -237,6 +241,8 @@ POST /api/mcp/run-tool
 
 - `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md`
 - `docs/MCP_SIMULATION_INTERFACE.md`
+- `docs/REAL_QC_SOFTWARE_INTEGRATION.md`
+- `docs/EXTERNAL_EXECUTION_SECURITY.md`
 
 ## Security Boundary
 
@@ -262,6 +268,10 @@ POST /api/mcp/run-tool
 ## Documentation
 
 - [科学计算工作流](docs/SCIENTIFIC_COMPUTATION_WORKFLOW.md)
+- [科学计算连接器](docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md)
+- [MCP 仿真接口](docs/MCP_SIMULATION_INTERFACE.md)
+- [真实科学计算软件连接说明](docs/REAL_QC_SOFTWARE_INTEGRATION.md)
+- [外部执行安全边界](docs/EXTERNAL_EXECUTION_SECURITY.md)
 - [科学计算完整测试报告](docs/SCIENTIFIC_COMPUTATION_FULL_TEST_REPORT.md)
 - [科学严谨性测试报告](docs/SCIENTIFIC_RIGOR_TEST_REPORT.md)
 - [科学计算测试报告](docs/SCIENTIFIC_CALCULATION_TEST_REPORT.md)

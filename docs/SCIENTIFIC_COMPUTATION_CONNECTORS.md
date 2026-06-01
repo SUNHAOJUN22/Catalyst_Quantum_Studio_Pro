@@ -44,6 +44,7 @@ POST /api/simulation/tools
 GET /api/simulation/tools/{tool_id}
 PATCH /api/simulation/tools/{tool_id}
 POST /api/simulation/tools/{tool_id}/validate-template
+POST /api/simulation/tools/{tool_id}/check-version
 ```
 
 ### 任务模板
@@ -53,6 +54,9 @@ POST /api/simulation/jobs
 GET /api/simulation/jobs
 GET /api/simulation/jobs/{job_id}
 POST /api/simulation/jobs/{job_id}/generate-template
+POST /api/simulation/jobs/{job_id}/dry-run
+POST /api/simulation/jobs/{job_id}/confirm
+POST /api/simulation/jobs/{job_id}/execute
 POST /api/simulation/jobs/{job_id}/mark-ready
 POST /api/simulation/jobs/{job_id}/cancel
 ```
@@ -109,7 +113,18 @@ POST /api/simulation/parse/goodvibes
 
 ## 剩余边界
 
-当前版本尚未实现外部执行队列。即使某个工具配置了可执行路径，平台也不会自动运行它。后续若需要执行，应单独设计：
+当前版本已经提供 `confirmed_execute` 的 API 守卫，但仍不会在默认环境中运行外部科学计算程序。真实执行必须同时满足：
+
+- 工具路径已配置且路径存在。
+- 任务为 `confirmed_execute` 模式。
+- 用户已二次确认。
+- 环境变量 `ENABLE_REAL_QC_EXECUTION=1`。
+- 命令由白名单模板生成，不能包含任意 shell 注入。
+- 工作目录和输入/输出路径通过安全检查。
+
+即使以上条件满足，当前 API 仍返回 `ready-but-not-run`，要求后续外部 runner 单独接管，避免 Web API 直接运行大型科学计算任务。
+
+后续若需要执行队列，应单独设计：
 
 - 用户二次确认。
 - 项目目录沙箱。

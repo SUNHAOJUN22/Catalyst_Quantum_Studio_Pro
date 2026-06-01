@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
+const frontendUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:3000";
 const apiUrl = process.env.API_URL ?? "http://127.0.0.1:8000";
 const screenshotDir = join(process.cwd(), "docs", "test-screenshots");
 
@@ -74,6 +74,7 @@ async function browserSmokeWithPlaywright() {
     "总览驾驶舱",
     "分子库",
     "科学计算工作流",
+    "科学计算连接器",
     "Gaussian 输入生成",
     "Gaussian 输出解析",
     "Si–O / Si–C 键实验室",
@@ -120,6 +121,15 @@ async function browserSmokeWithPlaywright() {
   await page.getByText(/BDE 计算/).first().waitFor({ timeout: 15000 });
   await page.getByRole("button", { name: /计算自由能差/ }).first().click();
   await page.getByText(/ΔGbind|ΔGpoison/).first().waitFor({ timeout: 15000 });
+
+  await page.getByRole("button", { name: /科学计算连接器/ }).click();
+  await page.getByText(/工具注册表/).first().waitFor({ timeout: 15000 });
+  await page.getByText(/默认不执行外部程序/).first().waitFor({ timeout: 15000 });
+  await page.getByText(/任务构建器/).first().waitFor({ timeout: 15000 });
+  await page.getByRole("button", { name: /生成任务模板/ }).click();
+  await page.getByText(/will_execute = false|命令模板预览/).first().waitFor({ timeout: 15000 });
+  await page.getByRole("button", { name: /dry-run/ }).click();
+  await page.getByText(/dry-run|ENABLE_REAL_QC_EXECUTION|缺少用户二次确认/).first().waitFor({ timeout: 15000 });
 
   await page.getByRole("button", { name: /Gaussian 输入生成/ }).click();
   await page.getByText(/任务模板/).first().waitFor({ timeout: 15000 });

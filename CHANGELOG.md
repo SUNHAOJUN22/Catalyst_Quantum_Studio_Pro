@@ -4,11 +4,13 @@
 
 - 新增科学计算连接器数据模型：`simulation_tools`、`simulation_jobs`、`simulation_parse_results`，保存工具配置、任务模板、只读解析结果、provenance、证据等级和安全边界。
 - 新增 `/api/simulation/*` 接口，支持 Gaussian、cubegen、Multiwfn、GoodVibes、SLURM 等工具登记、路径模板校验、任务草稿生成和只读 parser 调用。
+- 新增 `check-version`、`dry-run`、`confirm` 和 `execute` 安全守卫接口；默认执行路径被拦截，只有 `ENABLE_REAL_QC_EXECUTION=1`、`confirmed_execute` 和用户二次确认同时满足时才进入外部 runner 待接管状态。
+- 新增 `external_tool_registry`、`external_execution_guard`、`scientific_job_runner` 和 `scientific_output_watchers` 服务，分别处理路径配置、执行安全、任务确认和预期输出检查。
 - 所有连接器任务默认 `will_execute = false`，路径校验不执行 version command；检测到路径穿越时返回中文错误。
-- MCP 工具清单扩展到 `parse_nbo`、`parse_qtaim`、`parse_nci`、`parse_goodvibes`、`calculate_insert_barrier`、`calculate_bde_sio`、`calculate_radical_kinetics`、`generate_cubegen_template`、`generate_multiwfn_qtaim_template`、`generate_multiwfn_nci_template`、`generate_goodvibes_parse_task`、`generate_slurm_script_template` 和 `generate_chinese_report`。
+- MCP 工具清单扩展到 `parse_nbo`、`parse_qtaim`、`parse_nci`、`parse_goodvibes`、`calculate_insert_barrier`、`calculate_bde_sio`、`calculate_bde_roor`、`calculate_radical_kinetics`、`generate_formchk_template`、`generate_cubegen_template`、`generate_multiwfn_qtaim_template`、`generate_multiwfn_nci_template`、`generate_multiwfn_esp_template`、`generate_goodvibes_template`、`generate_goodvibes_parse_task`、`generate_slurm_script_template`、`validate_external_tool`、`dry_run_simulation_job`、`confirm_simulation_job`、`execute_confirmed_simulation_job` 和 `generate_chinese_report`。
 - 前端新增“科学计算连接器”页面，展示工具注册表、安全边界、任务模板生成器、命令模板预览和 provenance 面板。
 - 中文报告新增科学计算连接器、MCP 工具清单、命令模板、只读解析结果、未执行任务清单和下一步可证伪计算任务章节。
-- 新增 `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md` 与 `docs/MCP_SIMULATION_INTERFACE.md`，明确连接器/MCP 的模板生成、只读解析和不执行外部程序边界。
+- 新增 `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md`、`docs/MCP_SIMULATION_INTERFACE.md`、`docs/REAL_QC_SOFTWARE_INTEGRATION.md` 与 `docs/EXTERNAL_EXECUTION_SECURITY.md`，明确连接器/MCP 的模板生成、只读解析、真实软件配置、dry-run 和不执行外部程序边界。
 - 新增 `backend/tests/test_simulation_connectors.py`，覆盖非执行默认值、非法路径中文错误、任务模板、只读解析、MCP 白名单和未知工具拒绝。
 
 ## 2026-05-27 - 科学计算验证机制工作流

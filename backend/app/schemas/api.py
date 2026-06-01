@@ -580,3 +580,13 @@ class SimulationParseTextRequest(BaseModel):
     job_id: int | None = None
     project_id: int | None = None
     is_mock: bool = False
+
+
+class SimulationJobConfirmRequest(BaseModel):
+    user_confirmed: bool = False
+    confirmation_phrase: str | None = None
+
+
+class SimulationJobExecuteRequest(BaseModel):
+    user_confirmed: bool = False
+    dry_run: bool = False

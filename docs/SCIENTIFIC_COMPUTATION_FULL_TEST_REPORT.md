@@ -21,6 +21,8 @@
 
 本次测试未执行 Gaussian、cubegen、Multiwfn、GoodVibes 或用户上传文件。所有由示例数据得到的趋势仅用于验证软件逻辑，不能作为真实科学结论。
 
+2026-06-01 增量确认：真实科学计算软件连接器已支持 `check-version`、`dry-run`、`confirm` 和 `execute` 守卫路径。默认环境未设置 `ENABLE_REAL_QC_EXECUTION=1`，因此真实执行被拦截；本轮仅验证模板生成、只读解析、路径校验、MCP 白名单和中文拒绝信息。
+
 已确认：
 
 - Gaussian 输入生成只生成文本模板。
@@ -42,6 +44,14 @@
 | 7 | `npm --prefix frontend run build` | PASS |
 | 8 | `npm run test:e2e` | PASS，Playwright UI smoke 通过 |
 | 9 | `python scripts\quality_gate.py` | PASS，质量门禁通过 |
+
+2026-06-01 增量命令：
+
+| 顺序 | 命令 | 结果 |
+| ---: | --- | --- |
+| 10 | `backend\.venv\Scripts\python.exe -m pytest backend\tests\test_simulation_connectors.py backend\tests\test_external_tool_registry.py backend\tests\test_confirmed_execution_guard.py backend\tests\test_mcp_simulation_tools.py backend\tests\test_real_software_config_boundaries.py -q` | PASS，15 passed |
+| 11 | `backend\.venv\Scripts\python.exe scripts\full_function_smoke.py` | PASS，连接器工具清单、version dry-run、任务 dry-run 和执行守卫拒绝均通过 |
+| 12 | `npm run test:e2e` | PASS，新增“科学计算连接器”页面与 dry-run 交互通过 |
 
 ## 5. 科学公式核查表
 

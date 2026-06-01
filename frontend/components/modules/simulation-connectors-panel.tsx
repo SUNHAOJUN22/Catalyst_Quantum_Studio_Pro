@@ -59,6 +59,7 @@ export function SimulationConnectorsPanel() {
   const [jobType, setJobType] = useState("gaussian_input");
   const [moleculeName, setMoleculeName] = useState("MCSOMe");
   const [lastJob, setLastJob] = useState<SimulationJob | null>(null);
+  const [dryRun, setDryRun] = useState<Record<string, unknown> | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +97,40 @@ export function SimulationConnectorsPanel() {
       });
       setLastJob(payload.job);
       setWarnings(payload.warnings);
+      setDryRun(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "任务模板生成失败。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function dryRunLastJob() {
+    if (!lastJob) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = await apiPost<{ dry_run: Record<string, unknown> }>(`/simulation/jobs/${lastJob.id}/dry-run`, {});
+      setDryRun(payload.dry_run);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "dry-run 失败。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function testExecuteGuard() {
+    if (!lastJob) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await apiPost(`/simulation/jobs/${lastJob.id}/execute`, { user_confirmed: false });
+      setError("执行守卫未按预期拦截，请检查后端安全策略。");
+    } catch (cause) {
+      setDryRun({
+        status: "blocked",
+        detail: cause instanceof Error ? cause.message : "真实执行已被安全守卫拦截。",
+      });
     } finally {
       setLoading(false);
     }
@@ -202,11 +235,13 @@ export function SimulationConnectorsPanel() {
                 >
                   <option value="gaussian_input">Gaussian 输入模板</option>
                   <option value="insertion_ts">插入 TS 模板</option>
+                  <option value="formchk">formchk 模板</option>
                   <option value="cubegen_density">cubegen density 模板</option>
                   <option value="cubegen_esp">cubegen ESP 模板</option>
                   <option value="cubegen_homo_lumo">cubegen HOMO/LUMO 模板</option>
                   <option value="multiwfn_qtaim">Multiwfn QTAIM 脚本</option>
                   <option value="multiwfn_nci">Multiwfn NCI/RDG 脚本</option>
+                  <option value="multiwfn_esp">Multiwfn ESP 脚本</option>
                   <option value="goodvibes_parse">GoodVibes 解析任务</option>
                   <option value="slurm_template">SLURM 脚本模板</option>
                 </select>
@@ -223,12 +258,21 @@ export function SimulationConnectorsPanel() {
               </div>
               <StatusBadge tone={lastJob ? "blue" : "gray"}>{lastJob ? lastJob.status : "待生成"}</StatusBadge>
             </CardHeader>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={dryRunLastJob} disabled={!lastJob || loading}>dry-run</Button>
+              <Button variant="secondary" onClick={testExecuteGuard} disabled={!lastJob || loading}>测试执行守卫</Button>
+            </div>
             <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-xl bg-studio-ink p-3 text-xs leading-5 text-studio-text">
               {lastJob?.command_template || "当前没有任务模板。"}
             </pre>
             <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-xl bg-studio-ink p-3 text-xs leading-5 text-studio-text">
               {lastJob?.generated_text || "生成 Gaussian 输入、cubegen 模板或 Multiwfn 脚本后会显示在这里。"}
             </pre>
+            {dryRun ? (
+              <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-xl border border-studio-blue/30 bg-studio-blue/10 p-3 text-xs leading-5 text-studio-text">
+                {JSON.stringify(dryRun, null, 2)}
+              </pre>
+            ) : null}
           </Card>
 
           <ProvenancePanel

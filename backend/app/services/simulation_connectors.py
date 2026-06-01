@@ -159,6 +159,10 @@ def build_simulation_job_template(payload: Any) -> dict[str, Any]:
         generated_text = gaussian.content
         command_template = f"g16 < {gaussian.file_name} > {Path(gaussian.file_name).stem}.log"
         expected = expected or [f"{Path(gaussian.file_name).stem}.log"]
+    elif job_type == "formchk":
+        command_template = "formchk input.chk input.fchk"
+        generated_text = "# formchk 命令模板；未执行。"
+        expected = expected or ["input.fchk"]
     elif job_type == "cubegen_density":
         command_template = "cubegen 0 density=scf input.fchk density.cube 0 h"
         generated_text = "# cubegen 电子密度命令模板；未执行。"
@@ -179,7 +183,11 @@ def build_simulation_job_template(payload: Any) -> dict[str, Any]:
         command_template = "Multiwfn input.fchk < multiwfn_nci.inp > nci.txt"
         generated_text = "20\n4\n0\n# Multiwfn NCI/RDG 脚本模板；未执行。"
         expected = expected or ["nci.txt"]
-    elif job_type == "goodvibes_parse":
+    elif job_type == "multiwfn_esp":
+        command_template = "Multiwfn input.fchk < multiwfn_esp.inp > esp_extrema.txt"
+        generated_text = "12\n0\n# Multiwfn ESP extrema 脚本模板；未执行。"
+        expected = expected or ["esp_extrema.txt"]
+    elif job_type in {"goodvibes_parse", "goodvibes_template"}:
         command_template = "goodvibes *.log --qs grimme"
         generated_text = "# GoodVibes 解析任务模板；平台默认只解析用户提供的 GoodVibes 输出文本。"
         expected = expected or ["GoodVibes output text"]

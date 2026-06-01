@@ -220,7 +220,11 @@ Core endpoints:
 ```text
 GET /api/simulation/tools
 POST /api/simulation/tools
+POST /api/simulation/tools/{id}/check-version
 POST /api/simulation/jobs
+POST /api/simulation/jobs/{id}/dry-run
+POST /api/simulation/jobs/{id}/confirm
+POST /api/simulation/jobs/{id}/execute
 POST /api/simulation/parse/gaussian-log
 POST /api/simulation/parse/cube
 POST /api/simulation/parse/nbo
@@ -235,6 +239,8 @@ Related documents:
 
 - `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md`
 - `docs/MCP_SIMULATION_INTERFACE.md`
+- `docs/REAL_QC_SOFTWARE_INTEGRATION.md`
+- `docs/EXTERNAL_EXECUTION_SECURITY.md`
 
 ## Security Boundary
 

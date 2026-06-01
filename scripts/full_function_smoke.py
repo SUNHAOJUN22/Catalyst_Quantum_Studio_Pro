@@ -245,6 +245,23 @@ def main() -> int:
         json={"bond_type": "Si-C", "g_fragments_hartree": -199.86, "g_molecule_hartree": -200.0, "evidence_grade": "C"},
     )
     check("自由基动力学分析别名", "POST", "/api/analysis/radical-kinetics", json={"t_end": 1.0, "steps": 4})
+    sim_tools = check("科学计算连接器工具清单", "GET", "/api/simulation/tools")
+    assert "不执行 Gaussian" in sim_tools["safety_boundary"]
+    sim_tool = check(
+        "科学计算工具登记",
+        "POST",
+        "/api/simulation/tools",
+        json={"tool_type": "gaussian16", "display_name": "smoke gaussian", "executable_path": sys.executable, "default_mode": "confirmed_execute"},
+    )
+    check("科学计算工具 version dry-run", "POST", f"/api/simulation/tools/{sim_tool['tool']['id']}/check-version")
+    sim_job = check(
+        "科学计算任务模板",
+        "POST",
+        "/api/simulation/jobs",
+        json={"tool_id": sim_tool["tool"]["id"], "tool_type": "gaussian16", "job_type": "gaussian_input", "execution_mode": "confirmed_execute", "molecule_name": "MCSOMe"},
+    )
+    check("科学计算任务 dry-run", "POST", f"/api/simulation/jobs/{sim_job['job']['id']}/dry-run")
+    check_error("科学计算执行守卫拒绝", "POST", f"/api/simulation/jobs/{sim_job['job']['id']}/execute", 400, "ENABLE_REAL_QC_EXECUTION", json={"user_confirmed": True})
 
     report = check("中文报告生成", "POST", "/api/reports/generate", json={"project_title": "全功能烟测报告", "format": "markdown", "payload": {"note": "smoke"}})
     assert "content" in report

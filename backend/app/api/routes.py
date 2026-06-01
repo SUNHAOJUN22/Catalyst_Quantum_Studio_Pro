@@ -76,6 +76,8 @@ from app.schemas.api import (
     ReportDocxImportResponse,
     ResidenceTimeWindowRequest,
     ScientificEnergyWorkbenchRequest,
+    SimulationJobConfirmRequest,
+    SimulationJobExecuteRequest,
     SimulationJobRequest,
     SimulationParseTextRequest,
     SimulationToolRequest,
@@ -142,6 +144,8 @@ from app.services.simulation_connectors import (
     parse_simulation_text,
     validate_tool_template,
 )
+from app.services.external_tool_registry import check_version_dry_run
+from app.services.scientific_job_runner import build_dry_run_result, confirm_job_for_execution, execute_confirmed_job
 from app.services.ultra_science import (
     calculate_boltzmann_weights,
     calculate_bde_sic as ultra_calculate_bde_sic,
@@ -1639,6 +1643,19 @@ def validate_simulation_tool_template(tool_id: int, db: Session = Depends(get_db
     return {"tool": _simulation_tool_to_dict(row), "validation": validation}
 
 
+@router.post("/simulation/tools/{tool_id}/check-version")
+def check_simulation_tool_version(tool_id: int, db: Session = Depends(get_db)) -> dict:
+    row = db.get(SimulationTool, tool_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="未找到指定科学计算工具。")
+    result = check_version_dry_run(_simulation_tool_to_dict(row))
+    return {
+        "tool": _simulation_tool_to_dict(row),
+        "version_check": result,
+        "safety_boundary": "默认不执行 version command；真实检查需要 ENABLE_REAL_QC_EXECUTION=1 和独立确认。",
+    }
+
+
 @router.post("/simulation/jobs")
 def create_simulation_job(payload: SimulationJobRequest, db: Session = Depends(get_db)) -> dict:
     template = build_simulation_job_template(payload)
@@ -1696,6 +1713,69 @@ def regenerate_simulation_job_template(job_id: int, db: Session = Depends(get_db
         "generated_text": row.generated_text,
         "command_template": row.command_template,
         "safety_boundary": "仅返回已保存模板，不执行命令。",
+    }
+
+
+@router.post("/simulation/jobs/{job_id}/dry-run")
+def dry_run_simulation_job(job_id: int, db: Session = Depends(get_db)) -> dict:
+    row = db.get(SimulationJob, job_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+    tool = db.get(SimulationTool, row.tool_id) if row.tool_id else None
+    result = build_dry_run_result(_simulation_tool_to_dict(tool) if tool else None, _simulation_job_to_dict(row))
+    return {
+        "job": _simulation_job_to_dict(row),
+        "dry_run": result,
+        "safety_boundary": "dry-run 只返回执行计划，不运行外部科学计算程序。",
+    }
+
+
+@router.post("/simulation/jobs/{job_id}/confirm")
+def confirm_simulation_job(job_id: int, payload: SimulationJobConfirmRequest, db: Session = Depends(get_db)) -> dict:
+    row = db.get(SimulationJob, job_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+    result = confirm_job_for_execution(_simulation_job_to_dict(row), payload.user_confirmed, payload.confirmation_phrase)
+    if not result["confirmed"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    provenance = dict(row.provenance_json or {})
+    provenance["user_confirmed"] = True
+    provenance["confirmation_policy"] = result["detail"]
+    row.provenance_json = provenance
+    row.execution_mode = "confirmed_execute"
+    row.status = "confirmed"
+    row.will_execute = False
+    row.requires_user_confirmation = True
+    db.commit()
+    db.refresh(row)
+    return {
+        "job": _simulation_job_to_dict(row),
+        "confirmation": result,
+        "warning": "任务已确认，但 will_execute 仍为 false；execute 前会再次执行安全守卫。",
+    }
+
+
+@router.post("/simulation/jobs/{job_id}/execute")
+def execute_simulation_job(job_id: int, payload: SimulationJobExecuteRequest, db: Session = Depends(get_db)) -> dict:
+    row = db.get(SimulationJob, job_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+    tool = db.get(SimulationTool, row.tool_id) if row.tool_id else None
+    tool_dict = _simulation_tool_to_dict(tool) if tool else None
+    job_dict = _simulation_job_to_dict(row)
+    if payload.dry_run:
+        return {
+            "job": job_dict,
+            "dry_run": build_dry_run_result(tool_dict, job_dict),
+            "safety_boundary": "dry-run 只返回执行计划，不运行外部程序。",
+        }
+    result = execute_confirmed_job(tool_dict, job_dict, payload.user_confirmed)
+    if result["status"] == "blocked":
+        raise HTTPException(status_code=400, detail=result)
+    return {
+        "job": job_dict,
+        "execution": result,
+        "safety_boundary": "当前 API 不直接运行 Gaussian/cubegen/Multiwfn；真实 runner 需单独接管。",
     }
 
 
@@ -1895,6 +1975,9 @@ def mcp_run_tool(payload: McpToolRunRequest, db: Session = Depends(get_db)) -> d
     elif tool_name == "calculate_bde_sio":
         values = bond_dissociation_energy(float(arguments["g_fragments_hartree"]), float(arguments["g_molecule_hartree"]))
         result = values | {"bond_type": "Si-O", "formula": "BDE(Si–O) = G(R•) + G(•O–Si fragment) − G(R–O–Si)"}
+    elif tool_name == "calculate_bde_roor":
+        values = bond_dissociation_energy(float(arguments["g_fragments_hartree"]), float(arguments["g_molecule_hartree"]))
+        result = values | {"bond_type": "RO-OR", "formula": "BDE(RO–OR) = G(2RO•) − G(RO–OR)"}
     elif tool_name == "calculate_radical_kinetics":
         result = radical_kinetics_engine.simulate_rk4(
             initial={
@@ -1910,14 +1993,64 @@ def mcp_run_tool(payload: McpToolRunRequest, db: Session = Depends(get_db)) -> d
         template_type = str(arguments.get("template_type", "density"))
         job_type = "cubegen_density" if template_type == "density" else "cubegen_esp" if template_type == "esp" else "cubegen_homo_lumo"
         result = build_simulation_job_template(type("Payload", (), {"job_type": job_type, "tool_type": "cubegen", "execution_mode": "template_only"})())
+    elif tool_name == "generate_formchk_template":
+        result = build_simulation_job_template(type("Payload", (), {"job_type": "formchk", "tool_type": "formchk", "execution_mode": "template_only"})())
     elif tool_name == "generate_multiwfn_qtaim_template":
         result = build_simulation_job_template(type("Payload", (), {"job_type": "multiwfn_qtaim", "tool_type": "multiwfn", "execution_mode": "template_only"})())
     elif tool_name == "generate_multiwfn_nci_template":
         result = build_simulation_job_template(type("Payload", (), {"job_type": "multiwfn_nci", "tool_type": "multiwfn", "execution_mode": "template_only"})())
-    elif tool_name == "generate_goodvibes_parse_task":
+    elif tool_name == "generate_multiwfn_esp_template":
+        result = build_simulation_job_template(type("Payload", (), {"job_type": "multiwfn_esp", "tool_type": "multiwfn", "execution_mode": "template_only"})())
+    elif tool_name in {"generate_goodvibes_parse_task", "generate_goodvibes_template"}:
         result = build_simulation_job_template(type("Payload", (), {"job_type": "goodvibes_parse", "tool_type": "goodvibes", "execution_mode": "parse_only"})())
     elif tool_name == "generate_slurm_script_template":
         result = build_simulation_job_template(type("Payload", (), {"job_type": "slurm_template", "tool_type": "slurm", "execution_mode": "template_only", "molecule_name": str(arguments.get("job_name", "gaussian_job"))})())
+    elif tool_name == "validate_external_tool":
+        result = validate_tool_template(
+            {
+                "tool_type": str(arguments.get("tool_type", "gaussian16")),
+                "display_name": str(arguments.get("display_name", arguments.get("tool_type", "科学计算工具"))),
+                "executable_path": arguments.get("executable_path"),
+                "working_directory": arguments.get("working_directory"),
+                "default_mode": str(arguments.get("default_mode", "template_only")),
+            }
+        )
+    elif tool_name == "dry_run_simulation_job":
+        job_id = int(arguments["job_id"])
+        row = db.get(SimulationJob, job_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+        tool = db.get(SimulationTool, row.tool_id) if row.tool_id else None
+        result = build_dry_run_result(_simulation_tool_to_dict(tool) if tool else None, _simulation_job_to_dict(row))
+    elif tool_name == "confirm_simulation_job":
+        job_id = int(arguments["job_id"])
+        row = db.get(SimulationJob, job_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+        result = confirm_job_for_execution(
+            _simulation_job_to_dict(row),
+            bool(arguments.get("user_confirmed", False)),
+            str(arguments.get("confirmation_phrase")) if arguments.get("confirmation_phrase") is not None else None,
+        )
+        if result["confirmed"]:
+            provenance = dict(row.provenance_json or {})
+            provenance["user_confirmed"] = True
+            row.provenance_json = provenance
+            row.execution_mode = "confirmed_execute"
+            row.status = "confirmed"
+            row.will_execute = False
+            db.commit()
+    elif tool_name == "execute_confirmed_simulation_job":
+        job_id = int(arguments["job_id"])
+        row = db.get(SimulationJob, job_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="未找到指定科学计算任务。")
+        tool = db.get(SimulationTool, row.tool_id) if row.tool_id else None
+        result = execute_confirmed_job(
+            _simulation_tool_to_dict(tool) if tool else None,
+            _simulation_job_to_dict(row),
+            bool(arguments.get("user_confirmed", False)),
+        )
     elif tool_name == "generate_chinese_report":
         result = {
             "title": str(arguments.get("title", "中文科研报告草稿")),

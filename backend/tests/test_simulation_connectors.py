@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import sys
 
 from app.main import app
 
@@ -12,7 +13,7 @@ def test_simulation_tool_registry_defaults_are_non_executable() -> None:
     payload = response.json()
     assert "不执行 Gaussian" in payload["safety_boundary"]
     assert payload["tools"]
-    assert all(tool["can_execute"] is False for tool in payload["tools"])
+    assert all(tool["can_execute"] is False for tool in payload["tools"] if tool["id"] < 0)
     assert any(tool["tool_type"] == "gaussian16" for tool in payload["tools"])
 
 
@@ -71,6 +72,56 @@ def test_simulation_job_builder_generates_templates_without_execution() -> None:
     assert ready.json()["job"]["will_execute"] is False
 
 
+def test_confirmed_execution_guard_blocks_without_env_and_confirmation() -> None:
+    tool_response = client.post(
+        "/api/simulation/tools",
+        json={
+            "tool_type": "gaussian16",
+            "display_name": "Gaussian confirmed guard",
+            "executable_path": sys.executable,
+            "default_mode": "confirmed_execute",
+        },
+    )
+    assert tool_response.status_code == 200
+    tool = tool_response.json()["tool"]
+    assert tool["can_execute"] is True
+
+    version = client.post(f"/api/simulation/tools/{tool['id']}/check-version")
+    assert version.status_code == 200
+    assert version.json()["version_check"]["status"] == "skipped"
+    assert version.json()["version_check"]["can_run_version_check"] is False
+
+    job_response = client.post(
+        "/api/simulation/jobs",
+        json={
+            "tool_id": tool["id"],
+            "tool_type": "gaussian16",
+            "job_type": "gaussian_input",
+            "execution_mode": "confirmed_execute",
+            "molecule_name": "MCSOMe",
+        },
+    )
+    assert job_response.status_code == 200
+    job = job_response.json()["job"]
+
+    dry_run = client.post(f"/api/simulation/jobs/{job['id']}/dry-run")
+    assert dry_run.status_code == 200
+    assert dry_run.json()["dry_run"]["will_execute"] is False
+    assert "ENABLE_REAL_QC_EXECUTION" in "；".join(dry_run.json()["dry_run"]["validation"]["reasons"])
+
+    blocked = client.post(f"/api/simulation/jobs/{job['id']}/execute", json={"user_confirmed": False})
+    assert blocked.status_code == 400
+    assert "缺少用户二次确认" in str(blocked.json()["detail"])
+
+    confirm = client.post(f"/api/simulation/jobs/{job['id']}/confirm", json={"user_confirmed": True})
+    assert confirm.status_code == 200
+    assert confirm.json()["job"]["will_execute"] is False
+
+    still_blocked = client.post(f"/api/simulation/jobs/{job['id']}/execute", json={"user_confirmed": True})
+    assert still_blocked.status_code == 400
+    assert "ENABLE_REAL_QC_EXECUTION" in str(still_blocked.json()["detail"])
+
+
 def test_simulation_read_only_parsers_keep_quality_and_evidence_boundaries() -> None:
     nbo = client.post(
         "/api/simulation/parse/nbo",
@@ -92,9 +143,12 @@ def test_mcp_tools_expose_simulation_connector_capabilities() -> None:
     names = {tool["name"] for tool in tools}
     expected = {
         "generate_cubegen_template",
+        "generate_formchk_template",
         "generate_multiwfn_qtaim_template",
         "generate_multiwfn_nci_template",
+        "generate_multiwfn_esp_template",
         "generate_goodvibes_parse_task",
+        "generate_goodvibes_template",
         "generate_slurm_script_template",
         "parse_nbo",
         "parse_qtaim",
@@ -102,7 +156,12 @@ def test_mcp_tools_expose_simulation_connector_capabilities() -> None:
         "parse_goodvibes",
         "calculate_insert_barrier",
         "calculate_bde_sio",
+        "calculate_bde_roor",
         "calculate_radical_kinetics",
+        "validate_external_tool",
+        "dry_run_simulation_job",
+        "confirm_simulation_job",
+        "execute_confirmed_simulation_job",
         "generate_chinese_report",
     }
     assert expected.issubset(names)
@@ -117,3 +176,7 @@ def test_mcp_tools_expose_simulation_connector_capabilities() -> None:
     template = client.post("/api/mcp/run-tool", json={"tool_name": "generate-cubegen-template", "arguments": {"template_type": "esp"}})
     assert template.status_code == 200
     assert template.json()["result"]["will_execute"] is False
+
+    validation = client.post("/api/mcp/run-tool", json={"tool_name": "validate_external_tool", "arguments": {"tool_type": "gaussian16", "executable_path": "..\\bad.exe"}})
+    assert validation.status_code == 200
+    assert validation.json()["result"]["validation_status"] == "invalid-path"
