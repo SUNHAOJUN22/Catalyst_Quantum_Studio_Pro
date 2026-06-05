@@ -1,0 +1,4 @@
+interface:
+  display_name: "Polyolefin Quantum Mechanism Scientist"
+  short_description: "Scientific computing, guarded QC connectors, MCP, and evidence-grade workflows."
+  default_prompt: "Use this Skill to build or audit a polyolefin quantum-mechanism platform with rigorous formulas, read-only parsers, guarded scientific-software connectors, MCP interfaces, Chinese scientific UX, and explicit evidence boundaries."

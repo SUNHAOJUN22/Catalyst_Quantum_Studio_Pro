@@ -119,6 +119,28 @@ Optional dependencies:
 - PyMuPDF / python-docx for read-only literature extraction.
 - Gaussian, cubegen, Multiwfn, and GoodVibes are not executed by default and are treated as template targets unless explicitly configured.
 
+## Codex Professional Skill
+
+The reusable Skill is included at:
+
+```text
+.codex/skills/polyolefin-quantum-mechanism-scientist
+```
+
+Other users can copy this directory to:
+
+```text
+$CODEX_HOME/skills/polyolefin-quantum-mechanism-scientist
+```
+
+or:
+
+```text
+~/.codex/skills/polyolefin-quantum-mechanism-scientist
+```
+
+The Skill is path-independent and packages the four-axis mechanism, numerical rigor, scientific-software connectors, MCP rules, Chinese scientific UX, reporting evidence grades, and quality gates.
+
 ## Installation
 
 Install root and frontend dependencies:

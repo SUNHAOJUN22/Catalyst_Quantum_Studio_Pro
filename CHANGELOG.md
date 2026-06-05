@@ -3,6 +3,7 @@
 ## 2026-06-05 - 数理契约、专业 Skill 与证据边界强化
 
 - 专业通用 Skill `polyolefin-quantum-mechanism-scientist` 升级为可迁移科研工作协议，新增数值严谨性、科学软件连接器、MCP 工具和报告规范参考文件。
+- Skill 已同步到仓库 `.codex/skills/polyolefin-quantum-mechanism-scientist`，其他用户可从 GitHub 复制安装，不依赖私人路径。
 - Skill 新增 `scientific_formula_audit.py` 与 `check_external_tools.py`，分别执行独立公式审计和不运行外部程序的路径配置检查。
 - 后端新增机器可读 `GET /api/scientific-computation/validation-manifest`，统一发布常数、公式、单位、指数稳定策略、证据等级和论文结论边界。
 - 补齐 `1 Hartree = 2625.499638 kJ/mol` 的代码级常数与 BDE 多单位输出。

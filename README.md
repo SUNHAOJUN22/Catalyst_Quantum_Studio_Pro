@@ -121,6 +121,28 @@ S_LCB = R_branch / (R_branch + R_scission + R_oxidation)
 - PyMuPDF / python-docx：用于只读文献抽取。
 - Gaussian、cubegen、Multiwfn、GoodVibes：默认不执行，仅在用户显式配置并单独确认的外部流程中作为模板对象。
 
+## Codex Professional Skill
+
+仓库内置可复用专业 Skill：
+
+```text
+.codex/skills/polyolefin-quantum-mechanism-scientist
+```
+
+其他用户可将该目录复制到：
+
+```text
+$CODEX_HOME/skills/polyolefin-quantum-mechanism-scientist
+```
+
+或：
+
+```text
+~/.codex/skills/polyolefin-quantum-mechanism-scientist
+```
+
+Skill 包含四轴机制、数理严谨性、科学软件连接器、MCP、中文科研 UI、报告证据等级和质量门禁规则，不依赖私人本地路径。
+
 ## Installation
 
 安装根目录和前端依赖：
