@@ -3,7 +3,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from app.core.constants import DEFAULT_TEMPERATURE_K, HARTREE_TO_EV, HARTREE_TO_KCAL_MOL, R_KCAL_MOL_K
+from app.core.constants import (
+    DEFAULT_TEMPERATURE_K,
+    HARTREE_TO_EV,
+    HARTREE_TO_KCAL_MOL,
+    HARTREE_TO_KJ_MOL,
+    R_KCAL_MOL_K,
+)
 
 
 def hartree_to_kcal_mol(value: float) -> float:
@@ -12,6 +18,10 @@ def hartree_to_kcal_mol(value: float) -> float:
 
 def hartree_to_ev(value: float) -> float:
     return value * HARTREE_TO_EV
+
+
+def hartree_to_kj_mol(value: float) -> float:
+    return value * HARTREE_TO_KJ_MOL
 
 
 def kcal_mol_to_hartree(value: float) -> float:
@@ -46,6 +56,7 @@ def bond_dissociation_energy(g_fragments_hartree: float, g_molecule_hartree: flo
     return {
         "bde_hartree": bde_hartree,
         "bde_kcal_mol": hartree_to_kcal_mol(bde_hartree),
+        "bde_kj_mol": hartree_to_kj_mol(bde_hartree),
         "bde_ev": hartree_to_ev(bde_hartree),
     }
 
@@ -118,6 +129,16 @@ def insertion_profile(
     reference_barrier_kcal_mol: float | None = None,
     temperature_k: float = DEFAULT_TEMPERATURE_K,
 ) -> InsertionProfile:
+    _ensure_finite("free_site_monomer_g_hartree", free_site_monomer_g_hartree)
+    _ensure_finite("pi_complex_g_hartree", pi_complex_g_hartree)
+    _ensure_finite("ts_g_hartree", ts_g_hartree)
+    if product_g_hartree is not None:
+        _ensure_finite("product_g_hartree", product_g_hartree)
+    if reference_barrier_kcal_mol is not None:
+        _ensure_finite("reference_barrier_kcal_mol", reference_barrier_kcal_mol)
+    _ensure_finite("temperature_k", temperature_k)
+    if temperature_k <= 0:
+        raise ValueError("temperature_k 必须为正数。")
     delta_g_pi = hartree_to_kcal_mol(pi_complex_g_hartree - free_site_monomer_g_hartree)
     delta_g_barrier = hartree_to_kcal_mol(ts_g_hartree - free_site_monomer_g_hartree)
     delta_g_complex_barrier = hartree_to_kcal_mol(ts_g_hartree - pi_complex_g_hartree)

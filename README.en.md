@@ -64,7 +64,7 @@ Evidence grades:
 
 - A: Real Gaussian, Multiwfn, NBO, QTAIM, or NCI computation with convergence, frequency, TS imaginary mode, IRC, and provenance checks where applicable.
 - B: Real experimental data with explicit sample, process, and characterization conditions.
-- C: Literature clues or user input not reproduced in the current system.
+- C: Read-only parsed output pending method, convergence, frequency/TS/IRC, and source review; literature clues; or user input.
 - D: Example data, mock data, or mechanistic hypotheses only.
 
 Without grade A or B data, reports must state that the current data is insufficient for reliable conclusions.
@@ -219,6 +219,7 @@ Core endpoints:
 
 ```text
 GET /api/simulation/tools
+GET /api/scientific-computation/validation-manifest
 POST /api/simulation/tools
 POST /api/simulation/tools/{id}/check-version
 POST /api/simulation/jobs
@@ -235,12 +236,15 @@ GET /api/mcp/tools
 POST /api/mcp/run-tool
 ```
 
+MCP also exposes `audit_scientific_formulas` and `inspect_external_tool_configuration`. Both are read-only. Successful parsing alone does not create Grade A evidence; parsed outputs remain Grade C until the scientific validation chain is complete.
+
 Related documents:
 
 - `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md`
 - `docs/MCP_SIMULATION_INTERFACE.md`
 - `docs/REAL_QC_SOFTWARE_INTEGRATION.md`
 - `docs/EXTERNAL_EXECUTION_SECURITY.md`
+- `docs/PROFESSIONAL_SKILL_NUMERICAL_INTEGRATION_REPORT.md`
 
 ## Security Boundary
 

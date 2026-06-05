@@ -9,6 +9,7 @@ from app.services.cube import parse_cube_metadata
 from app.services.gaussian_parser import parse_gaussian_log_text
 from app.schemas.api import GaussianInputRequest
 from app.services.gaussian_templates import generate_gaussian_input
+from app.services.scientific_validation import assess_parser_evidence
 
 
 TOOL_DEFINITIONS: list[dict[str, Any]] = [
@@ -264,7 +265,7 @@ def parse_simulation_text(parser_name: str, text: str, file_name: str, is_mock: 
         units = {}
         warnings = ["未知 parser，无法解析。"]
 
-    evidence_grade = "D" if is_mock or quality == "failed" else "A"
+    evidence = assess_parser_evidence(normalized_parser, quality, is_mock, parsed if isinstance(parsed, dict) else {})
     return {
         "parser_name": normalized_parser,
         "source_file": Path(file_name).name,
@@ -274,7 +275,10 @@ def parse_simulation_text(parser_name: str, text: str, file_name: str, is_mock: 
         "units": units,
         "warnings": warnings,
         "errors": [str(parsed.get("error"))] if isinstance(parsed, dict) and parsed.get("error") else [],
-        "evidence_grade": evidence_grade,
+        "evidence_grade": evidence["evidence_grade"],
+        "eligible_evidence_grade": evidence["eligible_grade"],
+        "paper_ready": evidence["paper_ready"],
+        "evidence_reason": evidence["reason"],
         "is_mock": is_mock,
         "provenance": {
             "policy": "只读解析用户提供文本；未执行外部科学计算程序。",

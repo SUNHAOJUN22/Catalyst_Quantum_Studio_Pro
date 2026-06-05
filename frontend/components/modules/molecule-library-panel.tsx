@@ -14,6 +14,54 @@ import { moleculeLibrary, statusChinese } from "@/lib/studio-data";
 import type { StudioMolecule } from "@/types/studio";
 const MoleculeViewer = dynamic(() => import("@/components/molecule-viewer").then((m) => m.MoleculeViewer), { ssr: false });
 
+const MOLECULE_COLUMNS: ResourceColumn<StudioMolecule>[] = [
+  {
+    key: "name",
+    header: "分子资源",
+    render: (mol) => (
+      <div>
+        <p className="font-medium text-studio-text">{mol.key}</p>
+        <p className="mt-1 max-w-[260px] truncate font-mono text-xs text-studio-muted">{mol.smiles}</p>
+      </div>
+    ),
+  },
+  {
+    key: "family",
+    header: "家族 / 链长",
+    render: (mol) => (
+      <div className="space-y-1">
+        <p className="text-sm text-studio-text">{mol.family ?? "未归类"}</p>
+        <p className="text-xs text-studio-muted">{mol.chainLength ?? "链长待标注"}</p>
+      </div>
+    ),
+  },
+  {
+    key: "sites",
+    header: "功能位点",
+    render: (mol) => (
+      <div className="flex max-w-[260px] flex-wrap gap-1.5">
+        {(mol.functionalSites ?? ["C=C"]).slice(0, 3).map((site) => (
+          <StatusBadge key={site} tone={site.includes("O") ? "violet" : site.includes("Cl") ? "green" : site.includes("Al") ? "blue" : "gray"} className="h-7 px-2">
+            {site}
+          </StatusBadge>
+        ))}
+      </div>
+    ),
+  },
+  {
+    key: "evidence",
+    header: "证据 / 状态",
+    render: (mol) => (
+      <div className="flex flex-wrap gap-2">
+        <EvidenceBadge level={mol.source.includes("MOCK") ? "D" : mol.source.includes("论文") ? "C" : "B"} compact />
+        <StatusBadge tone={mol.source.includes("MOCK") ? "gray" : "blue"} className="h-7 px-2">
+          {mol.source.includes("MOCK") ? "示例数据" : "真实数据"}
+        </StatusBadge>
+      </div>
+    ),
+  },
+];
+
 export function MoleculeLibraryPanel({ selected, onSelect }: { selected: StudioMolecule; onSelect: (key: string) => void }) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
@@ -25,54 +73,6 @@ export function MoleculeLibraryPanel({ selected, onSelect }: { selected: StudioM
         .some((item) => String(item).toLowerCase().includes(keyword))
     );
   }, [query]);
-
-  const columns: ResourceColumn<StudioMolecule>[] = [
-    {
-      key: "name",
-      header: "分子资源",
-      render: (mol) => (
-        <div>
-          <p className="font-medium text-studio-text">{mol.key}</p>
-          <p className="mt-1 max-w-[260px] truncate font-mono text-xs text-studio-muted">{mol.smiles}</p>
-        </div>
-      ),
-    },
-    {
-      key: "family",
-      header: "家族 / 链长",
-      render: (mol) => (
-        <div className="space-y-1">
-          <p className="text-sm text-studio-text">{mol.family ?? "未归类"}</p>
-          <p className="text-xs text-studio-muted">{mol.chainLength ?? "链长待标注"}</p>
-        </div>
-      ),
-    },
-    {
-      key: "sites",
-      header: "功能位点",
-      render: (mol) => (
-        <div className="flex max-w-[260px] flex-wrap gap-1.5">
-          {(mol.functionalSites ?? ["C=C"]).slice(0, 3).map((site) => (
-            <StatusBadge key={site} tone={site.includes("O") ? "violet" : site.includes("Cl") ? "green" : site.includes("Al") ? "blue" : "gray"} className="h-7 px-2">
-              {site}
-            </StatusBadge>
-          ))}
-        </div>
-      ),
-    },
-    {
-      key: "evidence",
-      header: "证据 / 状态",
-      render: (mol) => (
-        <div className="flex flex-wrap gap-2">
-          <EvidenceBadge level={mol.source.includes("MOCK") ? "D" : mol.source.includes("论文") ? "C" : "B"} compact />
-          <StatusBadge tone={mol.source.includes("MOCK") ? "gray" : "blue"} className="h-7 px-2">
-            {mol.source.includes("MOCK") ? "示例数据" : "真实数据"}
-          </StatusBadge>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -95,7 +95,7 @@ export function MoleculeLibraryPanel({ selected, onSelect }: { selected: StudioM
             </div>
             <ResourceTable
               rows={filtered}
-              columns={columns}
+              columns={MOLECULE_COLUMNS}
               getRowKey={(mol) => mol.key}
               selectedKey={selected.key}
               onSelect={(mol) => onSelect(mol.key)}

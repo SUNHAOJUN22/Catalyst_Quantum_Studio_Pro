@@ -48,52 +48,52 @@ function poisonLabel(value: number | null): string {
   return "Ti 活性中心存在甲氧基毒化风险";
 }
 
-export function DecisionEnginePanel() {
-  const columns: ResourceColumn<DecisionResource>[] = [
-    {
-      key: "molecule",
-      header: "候选结构",
-      render: (row) => (
-        <div>
-          <p className="font-medium text-studio-text">{row.molecule}</p>
-          <p className="mt-1 text-xs text-studio-muted">{row.source}</p>
-        </div>
-      ),
-    },
-    {
-      key: "poison",
-      header: "Ti 毒化判据",
-      render: (row) => (
-        <div className="space-y-1">
-          <StatusBadge tone={poisonTone(row.deltaGPoison)} className="h-7 px-2">
-            {row.deltaGPoison === null ? "ΔGpoison 缺失" : `${row.deltaGPoison.toFixed(1)} kcal/mol`}
-          </StatusBadge>
-          <p className="text-xs text-studio-muted">{poisonLabel(row.deltaGPoison)}</p>
-        </div>
-      ),
-    },
-    {
-      key: "insert",
-      header: "插入 / 后反应",
-      render: (row) => (
-        <div className="text-sm leading-6 text-studio-muted">
-          <p>势垒：{row.insertionBarrier}</p>
-          <p>后反应：{row.postFunctionality}</p>
-        </div>
-      ),
-    },
-    {
-      key: "evidence",
-      header: "证据边界",
-      render: () => (
-        <div className="flex flex-wrap gap-2">
-          <EvidenceBadge level="D" compact />
-          <StatusBadge tone="gray" className="h-7 px-2">示例数据</StatusBadge>
-        </div>
-      ),
-    },
-  ];
+const DECISION_COLUMNS: ResourceColumn<DecisionResource>[] = [
+  {
+    key: "molecule",
+    header: "候选结构",
+    render: (row) => (
+      <div>
+        <p className="font-medium text-studio-text">{row.molecule}</p>
+        <p className="mt-1 text-xs text-studio-muted">{row.source}</p>
+      </div>
+    ),
+  },
+  {
+    key: "poison",
+    header: "Ti 毒化判据",
+    render: (row) => (
+      <div className="space-y-1">
+        <StatusBadge tone={poisonTone(row.deltaGPoison)} className="h-7 px-2">
+          {row.deltaGPoison === null ? "ΔGpoison 缺失" : `${row.deltaGPoison.toFixed(1)} kcal/mol`}
+        </StatusBadge>
+        <p className="text-xs text-studio-muted">{poisonLabel(row.deltaGPoison)}</p>
+      </div>
+    ),
+  },
+  {
+    key: "insert",
+    header: "插入 / 后反应",
+    render: (row) => (
+      <div className="text-sm leading-6 text-studio-muted">
+        <p>势垒：{row.insertionBarrier}</p>
+        <p>后反应：{row.postFunctionality}</p>
+      </div>
+    ),
+  },
+  {
+    key: "evidence",
+    header: "证据边界",
+    render: () => (
+      <div className="flex flex-wrap gap-2">
+        <EvidenceBadge level="D" compact />
+        <StatusBadge tone="gray" className="h-7 px-2">示例数据</StatusBadge>
+      </div>
+    ),
+  },
+];
 
+export function DecisionEnginePanel() {
   return (
     <div className="space-y-4">
       <PageHeader
@@ -112,7 +112,7 @@ export function DecisionEnginePanel() {
             </div>
             <StatusBadge tone="gray">Google Sheets 式矩阵</StatusBadge>
           </CardHeader>
-          <ResourceTable rows={scoreRows} columns={columns} getRowKey={(row) => row.molecule} />
+          <ResourceTable rows={scoreRows} columns={DECISION_COLUMNS} getRowKey={(row) => row.molecule} />
         </Card>
 
         <ProvenancePanel

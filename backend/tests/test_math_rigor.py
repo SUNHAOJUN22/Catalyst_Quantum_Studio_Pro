@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from app.core.constants import DEFAULT_TEMPERATURE_K, HARTREE_TO_EV, HARTREE_TO_KCAL_MOL, R_KCAL_MOL_K
+from app.core.constants import DEFAULT_TEMPERATURE_K, HARTREE_TO_EV, HARTREE_TO_KCAL_MOL, HARTREE_TO_KJ_MOL, R_KCAL_MOL_K
 from app.services.energy import (
     delta_g_binding,
     delta_g_poison,
@@ -17,6 +17,7 @@ from app.services.energy import (
 
 def test_physical_constants_are_pinned() -> None:
     assert HARTREE_TO_KCAL_MOL == 627.509474
+    assert HARTREE_TO_KJ_MOL == 2625.499638
     assert HARTREE_TO_EV == 27.211386245988
     assert R_KCAL_MOL_K == 0.00198720425864083
     assert DEFAULT_TEMPERATURE_K == 350.0
@@ -42,6 +43,11 @@ def test_free_energy_formulae_are_consistent() -> None:
     assert math.isclose(profile.delta_g_complex_barrier_kcal_mol, hartree_to_kcal_mol(0.030), abs_tol=1e-9)
     assert math.isclose(profile.delta_g_product_kcal_mol or 0.0, hartree_to_kcal_mol(-0.040), abs_tol=1e-9)
     assert profile.delta_delta_g_barrier_kcal_mol == pytest.approx(profile.delta_g_barrier_kcal_mol - 10.0)
+
+
+def test_insertion_profile_rejects_non_finite_input() -> None:
+    with pytest.raises(ValueError, match="ts_g_hartree 必须是有限数值"):
+        insertion_profile(-500.0, -500.01, float("nan"))
 
 
 def test_relative_rate_sign_temperature_and_extreme_bounds() -> None:

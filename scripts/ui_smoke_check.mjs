@@ -64,163 +64,175 @@ async function browserSmokeWithPlaywright() {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
 
-  await page.goto(frontendUrl, { waitUntil: "networkidle" });
-  for (const groupLabel of ["首页", "知识库", "分子与结构", "量子计算", "机理分析", "报告", "自动化"]) {
-    await page.getByText(groupLabel, { exact: true }).first().waitFor({ timeout: 15000 });
+  try {
+    await page.goto(frontendUrl, { waitUntil: "networkidle" });
+    for (const groupLabel of ["首页", "知识库", "分子与结构", "量子计算", "机理分析", "报告", "自动化"]) {
+      await page.getByText(groupLabel, { exact: true }).first().waitFor({ timeout: 15000 });
+    }
+    await page.getByPlaceholder("搜索分子、任务、报告、证据…").first().waitFor({ timeout: 15000 });
+    const navigationLabels = [
+      "整合总控台",
+      "总览驾驶舱",
+      "分子库",
+      "科学计算工作流",
+      "科学计算连接器",
+      "Gaussian 输入生成",
+      "Gaussian 输出解析",
+      "Si–O / Si–C 键实验室",
+      "过氧化物自由基",
+      "自由基动力学",
+      "电子云密度",
+      "ESP 静电势",
+      "Fukui 局部反应性",
+      "差分电子密度",
+      "前线轨道",
+      "NBO 相互作用",
+      "QTAIM / NCI 分析",
+      "中文报告生成",
+      "MCP 自动化工作流",
+    ];
+    for (const label of navigationLabels) {
+      await page.getByRole("button", { name: new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).click();
+      await page.waitForTimeout(80);
+    }
+
+    await page.goto(frontendUrl, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /^整合总控台$/ }).click();
+    await page.getByText("整合总控台").first().waitFor();
+    await page.getByText(/项目资源总览/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/Gaussian 任务模板宇宙/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /论文知识库/ }).click();
+    await page.getByText(/报告驱动知识映射/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/C 级|C级|内置线索|报告已导入/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/真实文件实例/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/解析质量/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/PDF 文本层疑似字体编码异常/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/导入 OCR 文本/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/C级证据/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /分子库/ }).click();
+    await page.getByText(/分子资源表/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/结构视图/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/分子详情/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /科学计算工作流/ }).click();
+    await page.getByText(/计算任务矩阵/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/能量公式工作台/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/BDE 计算/).first().waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /计算自由能差/ }).first().click();
+    await page.getByText(/ΔGbind|ΔGpoison/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /科学计算连接器/ }).click();
+    await page.getByText(/工具注册表/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/数理与证据契约/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/Hartree → kJ\/mol/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/默认不执行外部程序/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/任务构建器/).first().waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /生成任务模板/ }).click();
+    await page.getByText(/will_execute = false|命令模板预览/).first().waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /dry-run/ }).click();
+    await page.getByText(/dry-run|ENABLE_REAL_QC_EXECUTION|缺少用户二次确认/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /Gaussian 输入生成/ }).click();
+    await page.getByText(/任务模板/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/输入文件预览/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/不执行 Gaussian，仅生成输入文件/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /Gaussian 输出解析/ }).click();
+    await page.getByText(/仅读取，不执行 Gaussian/).first().waitFor({ timeout: 15000 });
+    await page.getByPlaceholder("粘贴 Gaussian 输出文本进行本地 Worker 预览").fill(sampleLog);
+    await page.getByRole("button", { name: /解析文件/ }).waitFor({ state: "visible", timeout: 15000 });
+    await page.getByRole("button", { name: /解析文件/ }).click();
+    await page.getByText(/normalized JSON|normal_termination|解析质量/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /中文报告生成/ }).click();
+    await page.getByText(/章节大纲/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/报告预览/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/证据与数据来源/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /数据管理/ }).click();
+    await page.getByText(/数据来源与可靠性/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/资源表/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/provenance 审计/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /实验数据闭环/ }).click();
+    await page.getByText(/实验-DFT 对照/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/实验数据记录/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/实验记录来源/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /量子判据引擎/ }).click();
+    await page.getByText(/判据资源表/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/证据与结论边界/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/中文论文式结论模板/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /合并工作台/ }).click();
+    await page.getByRole("button", { name: /运行四轴判据示例/ }).click();
+    await page.getByRole("button", { name: /运行后反应动力学/ }).click();
+    await page.getByText(/四轴判据|后反应动力学|RK4/).first().waitFor({ timeout: 15000 });
+
+    await page.getByRole("button", { name: /电子云密度/ }).click();
+    mkdirSync(screenshotDir, { recursive: true });
+    const cubePath = join(screenshotDir, "ui-smoke-density.cube");
+    writeFileSync(
+      cubePath,
+      [
+        "density smoke",
+        "small cube",
+        " 1 0.0 0.0 0.0",
+        " 2 1.0 0.0 0.0",
+        " 2 0.0 1.0 0.0",
+        " 2 0.0 0.0 1.0",
+        " 8 0.0 0.0 0.0 0.0",
+        " -0.4 -0.2 0.1 0.3 0.5 0.7 -0.1 0.0",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    await page.getByLabel("上传 cube 文件").setInputFiles(cubePath);
+    await page.getByText(/真实 cube 预览|已读取标量场/).first().waitFor({ timeout: 15000 });
+    await page.screenshot({ path: join(screenshotDir, "electron-density-cube-preview.png"), fullPage: true });
+
+    await page.getByRole("button", { name: /MCP 自动化工作流/ }).click();
+    await page.getByText(/工具列表/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/工具详情/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/输入 schema/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/运行结果/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/安全边界/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/顶尖科学家进化协议/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/报告证据闭环/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/A级证据/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/量子化学任务矩阵/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/实验表征映射/).first().waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /生成顶尖科学家 Prompt/ }).click();
+    await page.getByText(/安全边界/).first().waitFor({ timeout: 15000 });
+    await page.getByText(/证据等级/).first().waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /运行安全示例/ }).click();
+    await page.getByText(/allowed/).first().waitFor({ timeout: 15000 });
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+    if (overflow) fail("页面横向溢出检查", "documentElement.scrollWidth 超出视口");
+
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto(frontendUrl, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /总览驾驶舱/ }).click();
+    await page.getByText(/待处理任务/).first().waitFor({ timeout: 15000 });
+    const mobileOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+    if (mobileOverflow) fail("390px 移动端横向溢出检查", "documentElement.scrollWidth 超出视口");
+    await page.screenshot({ path: join(screenshotDir, "mobile-dashboard-390.png"), fullPage: true });
+
+    if (consoleErrors.length) fail("控制台 error 检查", consoleErrors.join("\n"));
+  } catch (error) {
+    console.error("Browser smoke test failed!");
+    console.error("Captured Console Errors:", consoleErrors.join("\n"));
+    mkdirSync(screenshotDir, { recursive: true });
+    await page.screenshot({ path: join(screenshotDir, "error-snapshot.png"), fullPage: true });
+    console.log("Saved error snapshot to docs/test-screenshots/error-snapshot.png");
+    throw error;
+  } finally {
+    await browser.close();
   }
-  await page.getByPlaceholder("搜索分子、任务、报告、证据…").first().waitFor({ timeout: 15000 });
-  const navigationLabels = [
-    "整合总控台",
-    "总览驾驶舱",
-    "分子库",
-    "科学计算工作流",
-    "科学计算连接器",
-    "Gaussian 输入生成",
-    "Gaussian 输出解析",
-    "Si–O / Si–C 键实验室",
-    "过氧化物自由基",
-    "自由基动力学",
-    "电子云密度",
-    "ESP 静电势",
-    "Fukui 局部反应性",
-    "差分电子密度",
-    "前线轨道",
-    "NBO 相互作用",
-    "QTAIM / NCI 分析",
-    "中文报告生成",
-    "MCP 自动化工作流",
-  ];
-  for (const label of navigationLabels) {
-    await page.getByRole("button", { name: new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).click();
-    await page.waitForTimeout(80);
-  }
-
-  await page.goto(frontendUrl, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: /^整合总控台$/ }).click();
-  await page.getByText("整合总控台").first().waitFor();
-  await page.getByText(/项目资源总览/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/Gaussian 任务模板宇宙/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /论文知识库/ }).click();
-  await page.getByText(/报告驱动知识映射/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/C 级|C级|内置线索|报告已导入/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/真实文件实例/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/解析质量/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/PDF 文本层疑似字体编码异常/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/导入 OCR 文本/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/C级证据/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /分子库/ }).click();
-  await page.getByText(/分子资源表/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/结构视图/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/分子详情/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /科学计算工作流/ }).click();
-  await page.getByText(/计算任务矩阵/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/能量公式工作台/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/BDE 计算/).first().waitFor({ timeout: 15000 });
-  await page.getByRole("button", { name: /计算自由能差/ }).first().click();
-  await page.getByText(/ΔGbind|ΔGpoison/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /科学计算连接器/ }).click();
-  await page.getByText(/工具注册表/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/默认不执行外部程序/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/任务构建器/).first().waitFor({ timeout: 15000 });
-  await page.getByRole("button", { name: /生成任务模板/ }).click();
-  await page.getByText(/will_execute = false|命令模板预览/).first().waitFor({ timeout: 15000 });
-  await page.getByRole("button", { name: /dry-run/ }).click();
-  await page.getByText(/dry-run|ENABLE_REAL_QC_EXECUTION|缺少用户二次确认/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /Gaussian 输入生成/ }).click();
-  await page.getByText(/任务模板/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/输入文件预览/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/不执行 Gaussian，仅生成输入文件/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /Gaussian 输出解析/ }).click();
-  await page.getByText(/仅读取，不执行 Gaussian/).first().waitFor({ timeout: 15000 });
-  await page.getByPlaceholder("粘贴 Gaussian 输出文本进行本地 Worker 预览").fill(sampleLog);
-  await page.getByRole("button", { name: /解析文件/ }).waitFor({ state: "visible", timeout: 15000 });
-  await page.getByRole("button", { name: /解析文件/ }).click();
-  await page.getByText(/normalized JSON|normal_termination|解析质量/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /中文报告生成/ }).click();
-  await page.getByText(/章节大纲/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/报告预览/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/证据与数据来源/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /数据管理/ }).click();
-  await page.getByText(/数据来源与可靠性/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/资源表/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/provenance 审计/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /实验数据闭环/ }).click();
-  await page.getByText(/实验-DFT 对照/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/实验数据记录/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/实验记录来源/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /量子判据引擎/ }).click();
-  await page.getByText(/判据资源表/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/证据与结论边界/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/中文论文式结论模板/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /合并工作台/ }).click();
-  await page.getByRole("button", { name: /运行四轴判据示例/ }).click();
-  await page.getByRole("button", { name: /运行后反应动力学/ }).click();
-  await page.getByText(/四轴判据|后反应动力学|RK4/).first().waitFor({ timeout: 15000 });
-
-  await page.getByRole("button", { name: /电子云密度/ }).click();
-  mkdirSync(screenshotDir, { recursive: true });
-  const cubePath = join(screenshotDir, "ui-smoke-density.cube");
-  writeFileSync(
-    cubePath,
-    [
-      "density smoke",
-      "small cube",
-      " 1 0.0 0.0 0.0",
-      " 2 1.0 0.0 0.0",
-      " 2 0.0 1.0 0.0",
-      " 2 0.0 0.0 1.0",
-      " 8 0.0 0.0 0.0 0.0",
-      " -0.4 -0.2 0.1 0.3 0.5 0.7 -0.1 0.0",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
-  await page.getByLabel("上传 cube 文件").setInputFiles(cubePath);
-  await page.getByText(/真实 cube 预览|已读取标量场/).first().waitFor({ timeout: 15000 });
-  await page.screenshot({ path: join(screenshotDir, "electron-density-cube-preview.png"), fullPage: true });
-
-  await page.getByRole("button", { name: /MCP 自动化工作流/ }).click();
-  await page.getByText(/工具列表/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/工具详情/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/输入 schema/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/运行结果/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/安全边界/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/顶尖科学家进化协议/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/报告证据闭环/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/A级证据/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/量子化学任务矩阵/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/实验表征映射/).first().waitFor({ timeout: 15000 });
-  await page.getByRole("button", { name: /生成顶尖科学家 Prompt/ }).click();
-  await page.getByText(/安全边界/).first().waitFor({ timeout: 15000 });
-  await page.getByText(/证据等级/).first().waitFor({ timeout: 15000 });
-  await page.getByRole("button", { name: /运行安全示例/ }).click();
-  await page.getByText(/allowed/).first().waitFor({ timeout: 15000 });
-
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
-  if (overflow) fail("页面横向溢出检查", "documentElement.scrollWidth 超出视口");
-
-  await page.setViewportSize({ width: 390, height: 900 });
-  await page.goto(frontendUrl, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: /总览驾驶舱/ }).click();
-  await page.getByText(/待处理任务/).first().waitFor({ timeout: 15000 });
-  const mobileOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
-  if (mobileOverflow) fail("390px 移动端横向溢出检查", "documentElement.scrollWidth 超出视口");
-  await page.screenshot({ path: join(screenshotDir, "mobile-dashboard-390.png"), fullPage: true });
-
-  if (consoleErrors.length) fail("控制台 error 检查", consoleErrors.join("\n"));
-  await browser.close();
-  pass("Playwright 浏览器 UI smoke", "全导航抽样、Gaussian 解析、cube 预览、合并工作台、MCP 工作流和 390px 移动端通过");
+  pass("Playwright 浏览器 UI smoke", "全导航抽样、Gaussian 解析、cube 预览、合并工作台、MCP 工作流 and 390px 移动端通过");
 }
 
 await httpSmoke();

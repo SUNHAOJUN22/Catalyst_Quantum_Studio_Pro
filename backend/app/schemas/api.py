@@ -127,6 +127,7 @@ class BdeResponse(BaseModel):
     bond_type: str
     bde_hartree: float
     bde_kcal_mol: float
+    bde_kj_mol: float
     bde_ev: float
     formula: str
     interpretation: str

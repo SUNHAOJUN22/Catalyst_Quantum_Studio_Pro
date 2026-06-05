@@ -221,20 +221,11 @@ function AppShellInner() {
           </AnimatePresence>
 
           {/* Module content */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              className="content-auto"
-              key={activeModule}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <ErrorBoundary fallbackModule={title.title} key={`eb-${activeModule}`}>
-                {activeContent}
-              </ErrorBoundary>
-            </motion.div>
-          </AnimatePresence>
+          <div key={activeModule}>
+            <ErrorBoundary fallbackModule={title.title} key={`eb-${activeModule}`}>
+              {activeContent}
+            </ErrorBoundary>
+          </div>
         </section>
       </div>
 

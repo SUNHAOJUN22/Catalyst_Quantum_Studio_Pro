@@ -16,6 +16,7 @@ def test_bde_core_units_and_classification() -> None:
     result = bond_dissociation_energy(-199.86, -200.0)
     assert result["bde_hartree"] == pytest.approx(0.14)
     assert result["bde_kcal_mol"] == pytest.approx(87.85132636)
+    assert result["bde_kj_mol"] == pytest.approx(367.56994932)
     assert result["bde_ev"] == pytest.approx(hartree_to_ev(0.14))
     assert classify_bde("Si-C", result["bde_kcal_mol"]) == "Si–C 侧链连接稳定"
     assert classify_bde("Si-C", 55.0) == "Si–C 连接臂存在失效风险"
@@ -32,6 +33,16 @@ def test_task_matrix_exposes_36_templates_and_safety_boundary() -> None:
     assert any(task["task_id"] == "sic_bde" for task in flattened)
     assert any(task["task_id"] == "pp_beta_ts" for task in flattened)
     assert all("safety_note" in task for task in flattened)
+
+
+def test_validation_manifest_is_machine_readable() -> None:
+    response = client.get("/api/scientific-computation/validation-manifest")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["constants"]["hartree_to_kj_mol"] == 2625.499638
+    assert any(item["key"] == "relative_rate" for item in payload["formulas"])
+    assert payload["evidence_policy"]["C"].startswith("只读解析结果")
+    assert "自动解析成功不等于 A 级证据" in payload["paper_boundary"]
 
 
 def test_energy_workbench_computes_formulas_and_reports_missing_paths() -> None:
@@ -77,6 +88,7 @@ def test_bde_api_keeps_evidence_and_mock_boundaries() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["bde_kcal_mol"] == pytest.approx(0.06 * 627.509474)
+    assert payload["bde_kj_mol"] == pytest.approx(0.06 * 2625.499638)
     assert payload["evidence_grade"] == "D"
     assert payload["is_mock"] is True
     assert "示例数据不能作为真实科学结论" in payload["reliability_note"]

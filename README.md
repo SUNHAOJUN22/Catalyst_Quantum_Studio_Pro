@@ -66,7 +66,7 @@ integrated/      archived source assets from earlier Si-O subproject integration
 
 - A 级：真实 Gaussian、Multiwfn、NBO、QTAIM 或 NCI 计算结果，且收敛、频率、TS 虚频、IRC 和 provenance 完整。
 - B 级：真实实验数据，样品、工艺和表征条件明确。
-- C 级：文献线索或用户输入，尚未在当前体系复现。
+- C 级：只读解析结果（尚未完成方法、收敛、频率/TS/IRC 和来源核验）、文献线索或用户输入。
 - D 级：示例数据、mock 数据或趋势假说，不能作为真实科研结论。
 
 没有 A / B 级数据时，报告必须写明当前数据不足，不能形成可靠结论。
@@ -221,6 +221,7 @@ npm run test:e2e
 
 ```text
 GET /api/simulation/tools
+GET /api/scientific-computation/validation-manifest
 POST /api/simulation/tools
 POST /api/simulation/tools/{id}/check-version
 POST /api/simulation/jobs
@@ -237,12 +238,15 @@ GET /api/mcp/tools
 POST /api/mcp/run-tool
 ```
 
+MCP 额外提供 `audit_scientific_formulas` 与 `inspect_external_tool_configuration`。二者只读取内置数理契约或路径配置，不执行外部程序。自动解析成功不等于 A 级证据；解析结果默认保持 C 级，完成完整科学核验后才可升级。
+
 相关文档：
 
 - `docs/SCIENTIFIC_COMPUTATION_CONNECTORS.md`
 - `docs/MCP_SIMULATION_INTERFACE.md`
 - `docs/REAL_QC_SOFTWARE_INTEGRATION.md`
 - `docs/EXTERNAL_EXECUTION_SECURITY.md`
+- `docs/PROFESSIONAL_SKILL_NUMERICAL_INTEGRATION_REPORT.md`
 
 ## Security Boundary
 

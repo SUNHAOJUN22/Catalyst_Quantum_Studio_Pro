@@ -515,50 +515,51 @@ export function LiteratureKnowledgeBase() {
   );
 }
 
+const EXPERIMENT_COLUMNS: ResourceColumn<(typeof experimentalRecords)[number]>[] = [
+  {
+    key: "monomer",
+    header: "单体 / 体系",
+    render: (record) => (
+      <div>
+        <p className="font-medium text-studio-text">{record.monomer}</p>
+        <p className="mt-1 text-xs text-studio-muted">{record.polymerization} · {record.chainLength}</p>
+      </div>
+    ),
+  },
+  {
+    key: "experiment",
+    header: "实验观测",
+    render: (record) => (
+      <div className="text-sm leading-6 text-studio-muted">
+        <p>活性：{record.activity ?? "待导入"} a.u.</p>
+        <p>插入率：{record.insertionRatio ?? "待导入"} %</p>
+      </div>
+    ),
+  },
+  {
+    key: "dft",
+    header: "DFT 描述符",
+    render: (record) => (
+      <div className="text-sm leading-6 text-studio-muted">
+        <p>ΔG‡：{record.deltaGBarrier ?? "缺失"} kcal/mol</p>
+        <p>ΔGpoison：{record.deltaGPoison ?? "缺失"} kcal/mol</p>
+      </div>
+    ),
+  },
+  {
+    key: "source",
+    header: "来源",
+    render: (record) => (
+      <div className="flex flex-wrap gap-2">
+        <EvidenceBadge level={record.source.includes("MOCK") || record.source.includes("示例") ? "D" : "C"} compact />
+        <StatusBadge tone="gray" className="h-7 px-2">{record.source.includes("MOCK") || record.source.includes("示例") ? "示例数据" : "用户输入"}</StatusBadge>
+      </div>
+    ),
+  },
+];
+
 export function ExperimentDftComparison() {
   const [selectedRecord, setSelectedRecord] = useState<(typeof experimentalRecords)[number]>(experimentalRecords[0]);
-  const columns: ResourceColumn<(typeof experimentalRecords)[number]>[] = [
-    {
-      key: "monomer",
-      header: "单体 / 体系",
-      render: (record) => (
-        <div>
-          <p className="font-medium text-studio-text">{record.monomer}</p>
-          <p className="mt-1 text-xs text-studio-muted">{record.polymerization} · {record.chainLength}</p>
-        </div>
-      ),
-    },
-    {
-      key: "experiment",
-      header: "实验观测",
-      render: (record) => (
-        <div className="text-sm leading-6 text-studio-muted">
-          <p>活性：{record.activity ?? "待导入"} a.u.</p>
-          <p>插入率：{record.insertionRatio ?? "待导入"} %</p>
-        </div>
-      ),
-    },
-    {
-      key: "dft",
-      header: "DFT 描述符",
-      render: (record) => (
-        <div className="text-sm leading-6 text-studio-muted">
-          <p>ΔG‡：{record.deltaGBarrier ?? "缺失"} kcal/mol</p>
-          <p>ΔGpoison：{record.deltaGPoison ?? "缺失"} kcal/mol</p>
-        </div>
-      ),
-    },
-    {
-      key: "source",
-      header: "来源",
-      render: (record) => (
-        <div className="flex flex-wrap gap-2">
-          <EvidenceBadge level={record.source.includes("MOCK") || record.source.includes("示例") ? "D" : "C"} compact />
-          <StatusBadge tone="gray" className="h-7 px-2">{record.source.includes("MOCK") || record.source.includes("示例") ? "示例数据" : "用户输入"}</StatusBadge>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -666,7 +667,7 @@ export function ExperimentDftComparison() {
         <div className="grid gap-4 p-5 pt-0 xl:grid-cols-[minmax(0,1fr)_340px]">
           <ResourceTable
             rows={experimentalRecords}
-            columns={columns}
+            columns={EXPERIMENT_COLUMNS}
             getRowKey={(record) => record.id}
             selectedKey={selectedRecord.id}
             onSelect={setSelectedRecord}

@@ -1,10 +1,10 @@
 # 数理严谨性自动测试报告
 
-- 测试时间：2026-06-01 10:32:23
+- 测试时间：2026-06-05 11:27:10
 - 测试环境：Python 3.11.9 / Windows-10-10.0.26300-SP0
 - 工作目录：D:\codex2_cataSi-O
-- 总检查项：31
-- 通过：31
+- 总检查项：32
+- 通过：32
 - 失败：0
 
 ## 执行命令
@@ -17,6 +17,7 @@ backend\.venv\Scripts\python.exe scripts\scientific_rigor_audit.py
 
 ## 单位换算核查结果
 - Hartree to kcal/mol：627.509474
+- Hartree to kJ/mol：2625.499638
 - Hartree to eV：27.211386245988
 - R：0.00198720425864083 kcal mol^-1 K^-1
 - 默认温度：350.0 K
@@ -30,6 +31,7 @@ backend\.venv\Scripts\python.exe scripts\scientific_rigor_audit.py
 ## 详细结果
 ### 常数
 - PASS：Hartree 到 kcal/mol：627.509474
+- PASS：Hartree 到 kJ/mol：2625.499638
 - PASS：Hartree 到 eV：27.211386245988
 - PASS：气体常数 R：0.00198720425864083
 - PASS：默认温度：350.0 K
@@ -51,15 +53,15 @@ backend\.venv\Scripts\python.exe scripts\scientific_rigor_audit.py
 - PASS：空 Gaussian log 不伪造数据：quality=failed, warnings=['未检测到 Gaussian 正常终止标记。', '当前文件中未找到吉布斯自由能。', '当前文件中未找到 NBO 二阶微扰分析结果。']
 
 ### API
-- PASS：能量组分：HTTP 200, 13.1 ms
-- PASS：TEA 助剂结合：HTTP 200, 3.5 ms
-- PASS：Ti 毒化判据：HTTP 200, 2.8 ms
-- PASS：插入反应剖面：HTTP 200, 2.7 ms
-- PASS：相对速率：HTTP 200, 2.9 ms
-- PASS：Si–O 描述符：HTTP 200, 2.7 ms
-- PASS：量子判据引擎：HTTP 200, 2.7 ms
-- PASS：Gaussian 文本解析：HTTP 200, 2.7 ms
-- PASS：中文报告生成：HTTP 200, 26.6 ms
+- PASS：能量组分：HTTP 200, 11.6 ms
+- PASS：TEA 助剂结合：HTTP 200, 3.0 ms
+- PASS：Ti 毒化判据：HTTP 200, 2.5 ms
+- PASS：插入反应剖面：HTTP 200, 2.5 ms
+- PASS：相对速率：HTTP 200, 2.5 ms
+- PASS：Si–O 描述符：HTTP 200, 2.6 ms
+- PASS：量子判据引擎：HTTP 200, 3.0 ms
+- PASS：Gaussian 文本解析：HTTP 200, 2.3 ms
+- PASS：中文报告生成：HTTP 200, 54.1 ms
 
 ### 错误路径
 - PASS：缺少 π-complex：HTTP 422

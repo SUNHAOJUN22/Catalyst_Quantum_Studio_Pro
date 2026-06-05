@@ -146,6 +146,7 @@ from app.services.simulation_connectors import (
 )
 from app.services.external_tool_registry import check_version_dry_run
 from app.services.scientific_job_runner import build_dry_run_result, confirm_job_for_execution, execute_confirmed_job
+from app.services.scientific_validation import scientific_validation_manifest
 from app.services.ultra_science import (
     calculate_boltzmann_weights,
     calculate_bde_sic as ultra_calculate_bde_sic,
@@ -346,6 +347,11 @@ def _expected_task_outputs(task_id: str) -> list[str]:
     if task_id in {"perox_homolysis", "h_abstract", "pp_beta_ts", "pp_recomb", "pp_coagent_graft", "pp_silane_reaction", "oxidation_side"}:
         return ["RO–OR BDE", "H 抽提势垒", "β-scission 势垒", "复合/接枝势垒", "氧化副反应风险"]
     return ["fchk/cube/Multiwfn 输出文件由用户外部生成后上传", "本平台仅解析上传结果"]
+
+
+@router.get("/scientific-computation/validation-manifest")
+def scientific_computation_validation_manifest() -> dict:
+    return scientific_validation_manifest()
 
 
 @router.post("/scientific-computation/energy-workbench")
@@ -1300,6 +1306,7 @@ def bde_analysis(payload: BdeRequest) -> BdeResponse:
         bond_type=bond_type,
         bde_hartree=result["bde_hartree"],
         bde_kcal_mol=result["bde_kcal_mol"],
+        bde_kj_mol=result["bde_kj_mol"],
         bde_ev=result["bde_ev"],
         formula=formula_map.get(bond_type, "BDE = ΣG(fragments) − G(parent molecule)"),
         interpretation=classify_bde(bond_type, result["bde_kcal_mol"]),
@@ -1989,6 +1996,18 @@ def mcp_run_tool(payload: McpToolRunRequest, db: Session = Depends(get_db)) -> d
             t_end=float(arguments.get("t_end", 1.0)),
             steps=int(arguments.get("steps", 20)),
         )
+    elif tool_name == "audit_scientific_formulas":
+        result = scientific_validation_manifest()
+    elif tool_name == "inspect_external_tool_configuration":
+        tool_type = str(arguments.get("tool_type", "gaussian16"))
+        rows = db.scalars(select(SimulationTool).where(SimulationTool.tool_type == tool_type)).all()
+        if rows:
+            result = check_version_dry_run(_simulation_tool_to_dict(rows[-1]))
+        else:
+            default = next((item for item in default_simulation_tools() if item["tool_type"] == tool_type), None)
+            if default is None:
+                raise HTTPException(status_code=400, detail="未知科学计算工具类型。")
+            result = check_version_dry_run(default)
     elif tool_name == "generate_cubegen_template":
         template_type = str(arguments.get("template_type", "density"))
         job_type = "cubegen_density" if template_type == "density" else "cubegen_esp" if template_type == "esp" else "cubegen_homo_lumo"

@@ -129,7 +129,9 @@ def test_simulation_read_only_parsers_keep_quality_and_evidence_boundaries() -> 
     )
     assert nbo.status_code == 200
     assert nbo.json()["quality"] == "partial"
-    assert nbo.json()["evidence_grade"] == "A"
+    assert nbo.json()["evidence_grade"] == "C"
+    assert nbo.json()["eligible_evidence_grade"] == "A"
+    assert nbo.json()["paper_ready"] is False
 
     empty = client.post("/api/simulation/parse/goodvibes", json={"file_name": "empty.out", "text": ""})
     assert empty.status_code == 200

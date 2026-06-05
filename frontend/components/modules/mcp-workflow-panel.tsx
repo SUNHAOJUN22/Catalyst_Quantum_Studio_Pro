@@ -50,6 +50,47 @@ type ReportKnowledgePayload = {
   provenance: string;
 };
 
+const TOOL_COLUMNS: ResourceColumn<ToolRow>[] = [
+  {
+    key: "tool",
+    header: "工具",
+    render: (tool) => (
+      <div>
+        <p className="font-medium text-studio-text">{tool.title}</p>
+        <p className="mt-1 font-mono text-xs text-studio-muted">{tool.name}</p>
+      </div>
+    ),
+  },
+  {
+    key: "scope",
+    header: "用途",
+    render: (tool) => <p className="max-w-[320px] text-sm leading-6 text-studio-muted">{tool.description}</p>,
+  },
+  {
+    key: "state",
+    header: "边界",
+    render: () => <StatusBadge tone="green" className="h-7 px-2">受控工具</StatusBadge>,
+  },
+];
+
+const RESOURCE_COLUMNS: ResourceColumn<ResourceRow>[] = [
+  {
+    key: "resource",
+    header: "资源",
+    render: (resource) => (
+      <div>
+        <p className="font-medium text-studio-text">{resource.title}</p>
+        <p className="mt-1 break-all font-mono text-xs text-studio-muted">{resource.uri}</p>
+      </div>
+    ),
+  },
+  {
+    key: "description",
+    header: "说明",
+    render: (resource) => <p className="text-sm leading-6 text-studio-muted">{resource.description}</p>,
+  },
+];
+
 export function McpWorkflowPanel() {
   const [tools, setTools] = useState<ToolRow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
@@ -118,45 +159,6 @@ export function McpWorkflowPanel() {
 
   const activeTool = useMemo(() => tools.find((tool) => tool.name === selectedToolName) ?? tools[0] ?? null, [selectedToolName, tools]);
   const activeResource = useMemo(() => resources.find((resource) => resource.uri === selectedResourceUri) ?? resources[0] ?? null, [selectedResourceUri, resources]);
-  const toolColumns: ResourceColumn<ToolRow>[] = [
-    {
-      key: "tool",
-      header: "工具",
-      render: (tool) => (
-        <div>
-          <p className="font-medium text-studio-text">{tool.title}</p>
-          <p className="mt-1 font-mono text-xs text-studio-muted">{tool.name}</p>
-        </div>
-      ),
-    },
-    {
-      key: "scope",
-      header: "用途",
-      render: (tool) => <p className="max-w-[320px] text-sm leading-6 text-studio-muted">{tool.description}</p>,
-    },
-    {
-      key: "state",
-      header: "边界",
-      render: () => <StatusBadge tone="green" className="h-7 px-2">受控工具</StatusBadge>,
-    },
-  ];
-  const resourceColumns: ResourceColumn<ResourceRow>[] = [
-    {
-      key: "resource",
-      header: "资源",
-      render: (resource) => (
-        <div>
-          <p className="font-medium text-studio-text">{resource.title}</p>
-          <p className="mt-1 break-all font-mono text-xs text-studio-muted">{resource.uri}</p>
-        </div>
-      ),
-    },
-    {
-      key: "description",
-      header: "说明",
-      render: (resource) => <p className="text-sm leading-6 text-studio-muted">{resource.description}</p>,
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -171,13 +173,13 @@ export function McpWorkflowPanel() {
           <CardHeader>
             <div>
               <CardTitle>工具列表</CardTitle>
-              <CardDescription>安全白名单内的 MCP 工具。行点击后在右侧查看 schema、运行结果和边界说明。</CardDescription>
+              <CardDescription>安全白名单内的 MCP 工具。行点击后在右侧查看 schema、运行结果 and 边界说明。</CardDescription>
             </div>
             <StatusBadge tone="green">受控工具</StatusBadge>
           </CardHeader>
           <ResourceTable
             rows={tools}
-            columns={toolColumns}
+            columns={TOOL_COLUMNS}
             getRowKey={(tool) => tool.name}
             selectedKey={activeTool?.name}
             onSelect={(tool) => setSelectedToolName(tool.name)}
@@ -188,7 +190,7 @@ export function McpWorkflowPanel() {
             <div className="mt-3">
               <ResourceTable
                 rows={resources}
-                columns={resourceColumns}
+                columns={RESOURCE_COLUMNS}
                 getRowKey={(resource) => resource.uri}
                 selectedKey={activeResource?.uri}
                 onSelect={(resource) => setSelectedResourceUri(resource.uri)}

@@ -15,7 +15,7 @@ sys.path.insert(0, str(BACKEND))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.core.constants import DEFAULT_TEMPERATURE_K, HARTREE_TO_EV, HARTREE_TO_KCAL_MOL, R_KCAL_MOL_K  # noqa: E402
+from app.core.constants import DEFAULT_TEMPERATURE_K, HARTREE_TO_EV, HARTREE_TO_KCAL_MOL, HARTREE_TO_KJ_MOL, R_KCAL_MOL_K  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services.energy import delta_g_binding, delta_g_poison, insertion_profile, relative_rate  # noqa: E402
 from app.services.gaussian_parser import parse_gaussian_log_text  # noqa: E402
@@ -88,6 +88,7 @@ def api_post(path: str, payload: dict[str, Any] | None = None, files: dict[str, 
 
 def check_constants() -> None:
     expect("Hartree 到 kcal/mol", HARTREE_TO_KCAL_MOL == 627.509474, str(HARTREE_TO_KCAL_MOL), "常数")
+    expect("Hartree 到 kJ/mol", HARTREE_TO_KJ_MOL == 2625.499638, str(HARTREE_TO_KJ_MOL), "常数")
     expect("Hartree 到 eV", HARTREE_TO_EV == 27.211386245988, str(HARTREE_TO_EV), "常数")
     expect("气体常数 R", R_KCAL_MOL_K == 0.00198720425864083, str(R_KCAL_MOL_K), "常数")
     expect("默认温度", DEFAULT_TEMPERATURE_K == 350.0, f"{DEFAULT_TEMPERATURE_K} K", "常数")
@@ -210,6 +211,7 @@ def write_report() -> Path:
         "",
         "## 单位换算核查结果",
         f"- Hartree to kcal/mol：{HARTREE_TO_KCAL_MOL}",
+        f"- Hartree to kJ/mol：{HARTREE_TO_KJ_MOL}",
         f"- Hartree to eV：{HARTREE_TO_EV}",
         f"- R：{R_KCAL_MOL_K} kcal mol^-1 K^-1",
         f"- 默认温度：{DEFAULT_TEMPERATURE_K} K",

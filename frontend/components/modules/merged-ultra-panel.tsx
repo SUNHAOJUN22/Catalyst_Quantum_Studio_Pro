@@ -377,15 +377,17 @@ function CapabilityCard({ icon, title, items }: { icon: ReactNode; title: string
   );
 }
 
-function CatalystResourceTable({ catalysts }: { catalysts: ReturnType<typeof getAllCatalysts> }) {
-  const columns: ResourceColumn<(typeof catalysts)[number]>[] = [
-    { key: "id", header: "条目", render: (row) => <span className="font-medium text-studio-text">{row.id}</span> },
-    { key: "formula", header: "化学式", render: (row) => row.formula },
-    { key: "name", header: "名称", render: (row) => row.name },
-    { key: "gap", header: "HOMO-LUMO gap / eV", render: (row) => row.gapEv.toFixed(2) },
-    { key: "dipole", header: "偶极矩 / Debye", render: (row) => row.dipoleMoment.magnitude.toFixed(2) },
-  ];
+type CatalystRow = ReturnType<typeof getAllCatalysts>[number];
 
+const CATALYST_COLUMNS: ResourceColumn<CatalystRow>[] = [
+  { key: "id", header: "条目", render: (row) => <span className="font-medium text-studio-text">{row.id}</span> },
+  { key: "formula", header: "化学式", render: (row) => row.formula },
+  { key: "name", header: "名称", render: (row) => row.name },
+  { key: "gap", header: "HOMO-LUMO gap / eV", render: (row) => row.gapEv.toFixed(2) },
+  { key: "dipole", header: "偶极矩 / Debye", render: (row) => row.dipoleMoment.magnitude.toFixed(2) },
+];
+
+function CatalystResourceTable({ catalysts }: { catalysts: ReturnType<typeof getAllCatalysts> }) {
   return (
     <Card>
       <CardHeader>
@@ -395,7 +397,7 @@ function CatalystResourceTable({ catalysts }: { catalysts: ReturnType<typeof get
         </div>
         <StatusBadge tone="blue">{catalysts.length} 个条目</StatusBadge>
       </CardHeader>
-      <ResourceTable rows={catalysts.slice(0, 6)} columns={columns} getRowKey={(row) => row.id} />
+      <ResourceTable rows={catalysts.slice(0, 6)} columns={CATALYST_COLUMNS} getRowKey={(row) => row.id} />
       <p className="mt-4 text-sm leading-7 text-studio-muted">
         这些条目来自子项目示例数据库，用于界面和算法联调；仍必须标注为示例数据，不能直接作为真实量子化学结论。
       </p>

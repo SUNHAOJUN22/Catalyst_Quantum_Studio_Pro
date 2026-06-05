@@ -53,6 +53,57 @@ type JobPayload = {
   safety_boundary: string;
 };
 
+type ValidationManifest = {
+  contract_version: string;
+  constants: Record<string, number>;
+  formulas: Array<{
+    key: string;
+    formula: string;
+    input_unit: string;
+    output_units: string[];
+    numerical_policy?: string;
+  }>;
+  paper_boundary: string;
+};
+
+const SIMULATION_TOOL_COLUMNS: ResourceColumn<SimulationTool>[] = [
+  {
+    key: "tool",
+    header: "工具",
+    render: (tool) => (
+      <div>
+        <p className="font-medium text-studio-text">{tool.display_name}</p>
+        <p className="mt-1 text-xs text-studio-muted">{tool.tool_type}</p>
+      </div>
+    ),
+  },
+  {
+    key: "mode",
+    header: "执行模式",
+    render: (tool) => (
+      <div className="space-y-1">
+        <StatusBadge tone={tool.can_execute ? "yellow" : "green"}>{tool.default_mode}</StatusBadge>
+        <p className="text-xs text-studio-muted">can_execute = {String(tool.can_execute)}</p>
+      </div>
+    ),
+  },
+  {
+    key: "status",
+    header: "配置状态",
+    render: (tool) => (
+      <div className="space-y-1">
+        <StatusBadge tone={tool.is_configured ? "blue" : "gray"}>{tool.validation_status}</StatusBadge>
+        <p className="text-xs text-studio-muted">{tool.safety_level}</p>
+      </div>
+    ),
+  },
+  {
+    key: "extensions",
+    header: "允许文件",
+    render: (tool) => <p className="max-w-[180px] text-xs leading-5 text-studio-muted">{tool.allowed_extensions.join(", ") || "无"}</p>,
+  },
+];
+
 export function SimulationConnectorsPanel() {
   const [tools, setTools] = useState<SimulationTool[]>([]);
   const [selectedToolId, setSelectedToolId] = useState<number | null>(null);
@@ -61,6 +112,7 @@ export function SimulationConnectorsPanel() {
   const [lastJob, setLastJob] = useState<SimulationJob | null>(null);
   const [dryRun, setDryRun] = useState<Record<string, unknown> | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [manifest, setManifest] = useState<ValidationManifest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +126,13 @@ export function SimulationConnectorsPanel() {
       .catch((cause) => {
         if (!controller.signal.aborted) {
           setError(cause instanceof Error ? cause.message : "科学计算连接器读取失败。");
+        }
+      });
+    apiGet<ValidationManifest>("/scientific-computation/validation-manifest", controller.signal)
+      .then(setManifest)
+      .catch((cause) => {
+        if (!controller.signal.aborted) {
+          setError(cause instanceof Error ? cause.message : "数理契约读取失败。");
         }
       });
     return () => controller.abort();
@@ -136,44 +195,6 @@ export function SimulationConnectorsPanel() {
     }
   }
 
-  const toolColumns: ResourceColumn<SimulationTool>[] = [
-    {
-      key: "tool",
-      header: "工具",
-      render: (tool) => (
-        <div>
-          <p className="font-medium text-studio-text">{tool.display_name}</p>
-          <p className="mt-1 text-xs text-studio-muted">{tool.tool_type}</p>
-        </div>
-      ),
-    },
-    {
-      key: "mode",
-      header: "执行模式",
-      render: (tool) => (
-        <div className="space-y-1">
-          <StatusBadge tone={tool.can_execute ? "yellow" : "green"}>{tool.default_mode}</StatusBadge>
-          <p className="text-xs text-studio-muted">can_execute = {String(tool.can_execute)}</p>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: "配置状态",
-      render: (tool) => (
-        <div className="space-y-1">
-          <StatusBadge tone={tool.is_configured ? "blue" : "gray"}>{tool.validation_status}</StatusBadge>
-          <p className="text-xs text-studio-muted">{tool.safety_level}</p>
-        </div>
-      ),
-    },
-    {
-      key: "extensions",
-      header: "允许文件",
-      render: (tool) => <p className="max-w-[180px] text-xs leading-5 text-studio-muted">{tool.allowed_extensions.join(", ") || "无"}</p>,
-    },
-  ];
-
   return (
     <div className="space-y-4">
       <PageHeader
@@ -194,7 +215,7 @@ export function SimulationConnectorsPanel() {
           </CardHeader>
           <ResourceTable
             rows={tools}
-            columns={toolColumns}
+            columns={SIMULATION_TOOL_COLUMNS}
             getRowKey={(tool) => String(tool.id)}
             selectedKey={selectedTool ? String(selectedTool.id) : undefined}
             onSelect={(tool) => setSelectedToolId(tool.id)}
@@ -213,6 +234,31 @@ export function SimulationConnectorsPanel() {
         </Card>
 
         <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>数理与证据契约</CardTitle>
+                <CardDescription>后端机器可读验证清单，统一常数、公式、单位、数值稳定策略和论文结论边界。</CardDescription>
+              </div>
+              <StatusBadge tone={manifest ? "green" : "gray"}>{manifest ? `v${manifest.contract_version}` : "读取中"}</StatusBadge>
+            </CardHeader>
+            <div className="grid gap-2 text-sm text-studio-muted sm:grid-cols-2">
+              <p>Hartree → kcal/mol：{manifest?.constants.hartree_to_kcal_mol ?? "待读取"}</p>
+              <p>Hartree → kJ/mol：{manifest?.constants.hartree_to_kj_mol ?? "待读取"}</p>
+              <p>Hartree → eV：{manifest?.constants.hartree_to_ev ?? "待读取"}</p>
+              <p>默认温度：{manifest?.constants.default_temperature_k ?? "待读取"} K</p>
+            </div>
+            <div className="mt-3 space-y-2">
+              {(manifest?.formulas ?? []).slice(0, 5).map((item) => (
+                <div key={item.key} className="rounded-lg border border-studio-line bg-studio-ink/40 px-3 py-2">
+                  <p className="font-mono text-xs text-studio-text">{item.formula}</p>
+                  <p className="mt-1 text-xs text-studio-muted">{item.input_unit} → {item.output_units.join(" / ")}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs leading-5 text-studio-yellow">{manifest?.paper_boundary ?? "自动解析成功不等于论文可用结论。"}</p>
+          </Card>
+
           <Card>
             <CardHeader>
               <div>

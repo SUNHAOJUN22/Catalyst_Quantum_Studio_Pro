@@ -58,7 +58,7 @@ def validate_confirmed_execution(tool: dict[str, Any] | None, job: dict[str, Any
 
     command_template = str(job.get("command_template") or "")
     if has_shell_injection(command_template):
-        warnings.append("命令模板包含 shell 重定向或控制符；真实执行必须转换为参数数组，当前仅允许 dry-run。")
+        reasons.append("命令模板包含 shell 重定向或控制符；必须转换为经过校验的参数数组，禁止直接执行。")
 
     for value in [*(job.get("input_files") or []), *(job.get("output_files_expected") or [])]:
         path_warning = safe_path_note(str(value))

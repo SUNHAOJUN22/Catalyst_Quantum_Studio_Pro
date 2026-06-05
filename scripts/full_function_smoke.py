@@ -223,6 +223,9 @@ def main() -> int:
     check("示例判据矩阵", "GET", "/api/analysis/mock-decision-matrix")
     task_matrix = check("科学计算任务矩阵", "GET", "/api/scientific-computation/task-matrix")
     assert task_matrix["total_tasks"] == 36
+    validation_manifest = check("科学计算数理契约", "GET", "/api/scientific-computation/validation-manifest")
+    assert validation_manifest["constants"]["hartree_to_kj_mol"] == 2625.499638
+    assert "自动解析成功不等于 A 级证据" in validation_manifest["paper_boundary"]
     check(
         "科学能量公式工作台",
         "POST",
@@ -262,6 +265,8 @@ def main() -> int:
     )
     check("科学计算任务 dry-run", "POST", f"/api/simulation/jobs/{sim_job['job']['id']}/dry-run")
     check_error("科学计算执行守卫拒绝", "POST", f"/api/simulation/jobs/{sim_job['job']['id']}/execute", 400, "ENABLE_REAL_QC_EXECUTION", json={"user_confirmed": True})
+    formula_audit = check("MCP 科学公式契约审计", "POST", "/api/mcp/run-tool", json={"tool_name": "audit_scientific_formulas", "arguments": {}})
+    assert formula_audit["result"]["constants"]["hartree_to_kj_mol"] == 2625.499638
 
     report = check("中文报告生成", "POST", "/api/reports/generate", json={"project_title": "全功能烟测报告", "format": "markdown", "payload": {"note": "smoke"}})
     assert "content" in report

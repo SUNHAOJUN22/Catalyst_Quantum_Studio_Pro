@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-06-05 - 数理契约、专业 Skill 与证据边界强化
+
+- 专业通用 Skill `polyolefin-quantum-mechanism-scientist` 升级为可迁移科研工作协议，新增数值严谨性、科学软件连接器、MCP 工具和报告规范参考文件。
+- Skill 新增 `scientific_formula_audit.py` 与 `check_external_tools.py`，分别执行独立公式审计和不运行外部程序的路径配置检查。
+- 后端新增机器可读 `GET /api/scientific-computation/validation-manifest`，统一发布常数、公式、单位、指数稳定策略、证据等级和论文结论边界。
+- 补齐 `1 Hartree = 2625.499638 kJ/mol` 的代码级常数与 BDE 多单位输出。
+- 只读 parser 的结果默认保持 C 级，并额外返回可升级等级、paper-ready 状态和待核验原因；自动解析成功不再直接等同 A 级证据。
+- 外部执行守卫将 shell 重定向和控制符从 warning 提升为阻断原因，真实 runner 必须使用校验后的参数数组。
+- MCP 新增 `audit_scientific_formulas` 与 `inspect_external_tool_configuration`，前端科学计算连接器新增“数理与证据契约”视图。
+- 扩展后端、API smoke、Playwright 与数理审计测试，覆盖 kJ/mol、机器可读公式契约、证据分级和 shell 注入阻断。
+
 ## 2026-05-28 - 科学计算连接器与 MCP 仿真接口
 
 - 新增科学计算连接器数据模型：`simulation_tools`、`simulation_jobs`、`simulation_parse_results`，保存工具配置、任务模板、只读解析结果、provenance、证据等级和安全边界。

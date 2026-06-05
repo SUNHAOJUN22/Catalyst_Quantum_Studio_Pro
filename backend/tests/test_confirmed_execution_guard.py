@@ -24,6 +24,7 @@ def test_confirmed_execution_guard_blocks_default_environment() -> None:
     result = validate_confirmed_execution(tool, job, user_confirmed=True)
     assert result["allowed"] is False
     assert any("ENABLE_REAL_QC_EXECUTION" in reason for reason in result["reasons"])
+    assert any("shell 重定向或控制符" in reason for reason in result["reasons"])
 
     dry_run = dry_run_execution_plan(tool, job)
     assert dry_run["will_execute"] is False
